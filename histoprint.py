@@ -181,9 +181,11 @@ def print_hist(hist, file=sys.stdout, title=""):
     print_(hist_formatter.format_histogram([count]), end="", file=file)
 
 
-def text_hist(*args, file=sys.stdout, title="", **kwargs):
+def text_hist(*args, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
 
+    file = kwargs.pop("file", sys.stdout)
+    title = kwargs.pop("title", "")
     hist = np.histogram(*args, **kwargs)
     print_hist(hist, file=file, title=title)
     return hist
