@@ -5,7 +5,7 @@ from __future__ import division
 import sys
 import numpy as np
 
-class BinFormater(object):
+class BinFormatter(object):
     """Class that turns bin contents into text.
 
     Arguments
@@ -93,20 +93,65 @@ class BinFormater(object):
         """Format the axis without a tick mark."""
         return ' '*self.tick_format_width + self.no_tick_mark
 
+class HistFormatter(object):
+    """Class that handles the formating of histograms.
+
+    Arguments
+    ---------
+
+    lines, columns : int
+        The number of lines and maximum numbre of columns of the output.
+    count_area : bool
+        Whether the bin content is represented by the area or height of the bin.
+    scale_bin_width : bool
+        Whether the lines per bin should scale with the bin width.
+
+    """
+
+    def __init__(self, edges, lines=20, columns=79, count_area=True, scale_bin_width=True):
+        self.edges = edges
+        self.lines = lines
+        self.columns = columns
+        self.hist_lines = lines
+        if scale_bin_width:
+            # Try to scale bins so the number of lines is
+            # roughly proportional to the bin width
+            line_scale = ((edges[-1] - edges[0]) / self.hist_lines) * 0.999
+        else:
+            # Choose the larges bin as scale,
+            # so all bins will scale to <= 1 lines
+            # and be rendered with one line
+            line_scale = np.max(edges[1:] - edges[:-1])
+        self.bin_lines = ((edges[1:] - edges[:-1]) // line_scale).astype(int)
+        self.bin_lines = np.where(self.bin_lines, self.bin_lines, 1)
+        self.bin_formatter = BinFormatter()
+
+    def format_histogram(self, counts):
+        """Format (a set of) histogram counts."""
+
+        axis_width = self.bin_formatter.tick_format_width + len(self.bin_formatter.tick_mark)
+        hist_width = self.columns - axis_width
+
+        counts = np.array(counts)
+        c = np.sum(counts, axis=0) / self.bin_lines
+        symbol_scale = np.max(c) / hist_width
+        self.bin_formatter.scale = symbol_scale
+
+        hist_string = ""
+        top = self.edges[:-1]
+        bottom = self.edges[1:]
+
+        for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
+            hist_string += self.bin_formatter.format_bin(t,b,c,w)
+
+        return hist_string
+
 def print_hist(hist, file=sys.stdout):
     """plot the output of ``numpy.histogram`` to the console."""
 
-    counts, edges = hist
-    left = np.array(edges[:-1])
-    right = np.array(edges[1:])
-    width = right-left
-    max_count = np.max(counts)
-    scale = max_count / 68
-
-    bin_formater = BinFormater(scale=scale)
-
-    for c, l, r in zip(counts, left, right):
-        print(bin_formater.format_bin(l,r,[c]), end='', file=file)
+    count, edges = hist
+    hist_formatter = HistFormatter(edges)
+    print(hist_formatter.format_histogram([count]), end='', file=file)
 
 def text_hist(*args, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
@@ -122,9 +167,9 @@ def test_hist():
     B = np.random.randn(1000) + 2
 
     print('')
-    text_hist(A)
+    text_hist(A, bins=10)
     print('')
-    text_hist(B)
+    text_hist(B, bins=20)
 
 if __name__ == '__main__':
     test_hist()
