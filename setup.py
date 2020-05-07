@@ -1,22 +1,22 @@
 from setuptools import setup
 
 # Todo: Parse this from a proper readme file in the future
-description="print-histogram"
-long_description = """print-histogram
+description="histoprint"
+long_description = """histoprint
 
 Pretty print numpy histograms to the console.
 
 """
 
-setup(name='print-histogram',
+setup(name='histoprint',
     version='0.0.1',
     description=description,
     long_description=long_description,
-    url='https://github.com/ast0815/print-histogram',
+    url='https://github.com/ast0815/histoprint',
     author='Lukas Koch',
     author_email='lukas.koch@mailbox.org',
     license='MIT',
-    py_modules=['print-histogram'],
+    py_modules=['histoprint'],
     install_requires=[
         'numpy>=1.0.0',
         'six>=1.10.0',
