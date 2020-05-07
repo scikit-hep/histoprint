@@ -1,6 +1,7 @@
 """Simple function to plot the output of ``numpy.histogram`` to the console"""
 
 from __future__ import division
+from six import print_
 
 import sys
 import numpy as np
@@ -151,7 +152,7 @@ def print_hist(hist, file=sys.stdout):
 
     count, edges = hist
     hist_formatter = HistFormatter(edges)
-    print(hist_formatter.format_histogram([count]), end='', file=file)
+    print_(hist_formatter.format_histogram([count]), end='', file=file)
 
 def text_hist(*args, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
@@ -166,10 +167,18 @@ def test_hist():
     A = np.random.randn(1000)
     B = np.random.randn(1000) + 2
 
-    print('')
+    print_('')
     text_hist(A, bins=10)
-    print('')
-    text_hist(B, bins=20)
+    print_('')
+    text_hist(A, bins=15)
+    print_('')
+    text_hist(A, bins=20)
+    print_('')
+    text_hist(A, bins=21)
+    print_('')
+    text_hist(A, bins=[-3,-2,-1,-0.5,0,0.5,1,2,3])
+    print_('')
+    text_hist(A, bins=[-5,-3,-2,-1,-0.5,0,0.5,1,2,3,5])
 
 if __name__ == '__main__':
     test_hist()
