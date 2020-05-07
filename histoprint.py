@@ -122,12 +122,19 @@ class HistFormatter(object):
     """
 
     def __init__(
-        self, edges, lines=20, columns=79, count_area=True, scale_bin_width=True
+        self,
+        edges,
+        lines=23,
+        columns=79,
+        count_area=True,
+        scale_bin_width=True,
+        title="",
     ):
+        self.title = title
         self.edges = edges
         self.lines = lines
         self.columns = columns
-        self.hist_lines = lines
+        self.hist_lines = lines - 2
         if scale_bin_width:
             # Try to scale bins so the number of lines is
             # roughly proportional to the bin width
@@ -154,9 +161,11 @@ class HistFormatter(object):
         symbol_scale = np.max(c) / hist_width
         self.bin_formatter.scale = symbol_scale
 
-        hist_string = ""
+        hist_string = ("{:^%ds}\n" % (self.columns,)).format(self.title)
         top = self.edges[:-1]
         bottom = self.edges[1:]
+
+        hist_string += self.bin_formatter.tick(top[0]) + "\n"
 
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
             hist_string += self.bin_formatter.format_bin(t, b, c, w)
@@ -164,19 +173,19 @@ class HistFormatter(object):
         return hist_string
 
 
-def print_hist(hist, file=sys.stdout):
+def print_hist(hist, file=sys.stdout, title=""):
     """plot the output of ``numpy.histogram`` to the console."""
 
     count, edges = hist
-    hist_formatter = HistFormatter(edges)
+    hist_formatter = HistFormatter(edges, title=title)
     print_(hist_formatter.format_histogram([count]), end="", file=file)
 
 
-def text_hist(*args, **kwargs):
+def text_hist(*args, file=sys.stdout, title="", **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
 
     hist = np.histogram(*args, **kwargs)
-    print_hist(hist)
+    print_hist(hist, file=file, title=title)
     return hist
 
 
@@ -197,7 +206,7 @@ def test_hist():
     print_("")
     text_hist(A, bins=[-3, -2, -1, -0.5, 0, 0.5, 1, 2, 3])
     print_("")
-    text_hist(A, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5])
+    text_hist(A, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5], title="Test")
 
 
 if __name__ == "__main__":
