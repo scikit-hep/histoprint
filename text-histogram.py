@@ -6,6 +6,7 @@ from six import print_
 import sys
 import numpy as np
 
+
 class BinFormatter(object):
     """Class that turns bin contents into text.
 
@@ -30,7 +31,17 @@ class BinFormatter(object):
 
     """
 
-    def __init__(self, scale=1., count_area=True, tick_format='% .2e ', tick_format_width=10, tick_mark='_', no_tick_mark=' ', print_top_edge=False, symbols="#XO"):
+    def __init__(
+        self,
+        scale=1.0,
+        count_area=True,
+        tick_format="% .2e ",
+        tick_format_width=10,
+        tick_mark="_",
+        no_tick_mark=" ",
+        print_top_edge=False,
+        symbols="#XO",
+    ):
         self.scale = scale
         self.count_area = count_area
         self.tick_format = tick_format
@@ -79,20 +90,21 @@ class BinFormatter(object):
 
             # Print symbols
             for h, s in zip(heights, self.symbols):
-                bin_string += s*h
+                bin_string += s * h
 
             # New line
-            bin_string += '\n'
+            bin_string += "\n"
 
         return bin_string
 
     def tick(self, edge):
         """Format the tick mark of a bin."""
-        return self.tick_format%(edge,) + self.tick_mark
+        return self.tick_format % (edge,) + self.tick_mark
 
     def no_tick(self):
         """Format the axis without a tick mark."""
-        return ' '*self.tick_format_width + self.no_tick_mark
+        return " " * self.tick_format_width + self.no_tick_mark
+
 
 class HistFormatter(object):
     """Class that handles the formating of histograms.
@@ -109,7 +121,9 @@ class HistFormatter(object):
 
     """
 
-    def __init__(self, edges, lines=20, columns=79, count_area=True, scale_bin_width=True):
+    def __init__(
+        self, edges, lines=20, columns=79, count_area=True, scale_bin_width=True
+    ):
         self.edges = edges
         self.lines = lines
         self.columns = columns
@@ -130,7 +144,9 @@ class HistFormatter(object):
     def format_histogram(self, counts):
         """Format (a set of) histogram counts."""
 
-        axis_width = self.bin_formatter.tick_format_width + len(self.bin_formatter.tick_mark)
+        axis_width = self.bin_formatter.tick_format_width + len(
+            self.bin_formatter.tick_mark
+        )
         hist_width = self.columns - axis_width
 
         counts = np.array(counts)
@@ -143,16 +159,18 @@ class HistFormatter(object):
         bottom = self.edges[1:]
 
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
-            hist_string += self.bin_formatter.format_bin(t,b,c,w)
+            hist_string += self.bin_formatter.format_bin(t, b, c, w)
 
         return hist_string
+
 
 def print_hist(hist, file=sys.stdout):
     """plot the output of ``numpy.histogram`` to the console."""
 
     count, edges = hist
     hist_formatter = HistFormatter(edges)
-    print_(hist_formatter.format_histogram([count]), end='', file=file)
+    print_(hist_formatter.format_histogram([count]), end="", file=file)
+
 
 def text_hist(*args, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
@@ -161,24 +179,26 @@ def text_hist(*args, **kwargs):
     print_hist(hist)
     return hist
 
+
 def test_hist():
     """Poor man's unit tests."""
 
     A = np.random.randn(1000)
     B = np.random.randn(1000) + 2
 
-    print_('')
+    print_("")
     text_hist(A, bins=10)
-    print_('')
+    print_("")
     text_hist(A, bins=15)
-    print_('')
+    print_("")
     text_hist(A, bins=20)
-    print_('')
+    print_("")
     text_hist(A, bins=21)
-    print_('')
-    text_hist(A, bins=[-3,-2,-1,-0.5,0,0.5,1,2,3])
-    print_('')
-    text_hist(A, bins=[-5,-3,-2,-1,-0.5,0,0.5,1,2,3,5])
+    print_("")
+    text_hist(A, bins=[-3, -2, -1, -0.5, 0, 0.5, 1, 2, 3])
+    print_("")
+    text_hist(A, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_hist()
