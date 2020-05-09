@@ -1,7 +1,7 @@
 """Simple function to plot the output of ``numpy.histogram`` to the console"""
 
 from __future__ import division
-from six import print_
+from six import print_, ensure_str
 
 import sys
 import numpy as np
@@ -374,7 +374,7 @@ def print_hist(hist, file=sys.stdout, **kwargs):
 
     count, edges = hist
     hist_formatter = HistFormatter(edges, **kwargs)
-    print_(hist_formatter.format_histogram(count), end="", file=file)
+    print_(ensure_str(hist_formatter.format_histogram(count)), end="", file=file)
 
 
 def text_hist(*args, **kwargs):
