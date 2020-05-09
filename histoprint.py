@@ -6,6 +6,10 @@ from six import print_
 import sys
 import numpy as np
 
+DEFAULT_SYMBOLS = " |="
+DEFAULT_FG_COLORS = "0WW"
+DEFAULT_BG_COLORS = "K00"
+
 
 class Hixel(object):
     """The smallest unit of a histogram plot."""
@@ -19,10 +23,11 @@ class Hixel(object):
     def add(self, char=" ", fg="0", bg="0"):
         """Add another element on top."""
 
-        if char != " " and fg == self.fg_color:
+        if fg == self.fg_color:
             # Combine characters if possible
             self.character = self.overlay_characters(self.character, char)
-        else:
+        elif char != " ":
+            # Otherwise overwrite if it is not a " "
             self.character = char
             self.fg_color = fg
 
@@ -78,6 +83,7 @@ class Hixel(object):
             "-" + "|" -> "+"
             "=" + "|" -> "#"
             "/" + "\" -> "X"
+            " " + any -> any
 
         """
 
@@ -86,26 +92,41 @@ class Hixel(object):
             ("=", "|"): "#",
             ("/", "\\"): "X",
         }
-        return subs.get((char1, char2), subs.get((char2, char1), char2))
+        if char2 == " ":
+            # if char2 is " " return char 1
+            return char1
+        else:
+            # Otherwise return char2 if there is no valid combination
+            return subs.get((char1, char2), subs.get((char2, char1), char2))
 
     def ansi_color_string(self, fg, bg):
         """Set the terminal color."""
         ret = ""
         if self.use_color:
-            fg = int(fg, 16) + 30
-            bg = int(bg, 16) + 40
-            if fg > 37:
-                fg += 52
-            if bg > 47:
-                bg += 52
-            if fg == 30:
-                ret += "\033[%dm" % (39,)
-            else:
-                ret += "\033[%dm" % (fg,)
-            if bg == 40:
-                ret += "\033[%dm" % (49,)
-            else:
-                ret += "\033[%dm" % (bg,)
+            # The ANSI color codes
+            subs = {
+                "k": 30,
+                "r": 31,
+                "g": 32,
+                "y": 33,
+                "b": 34,
+                "m": 35,
+                "c": 36,
+                "w": 37,
+                "0": 39,  # Reset to default
+                "K": 90,
+                "R": 91,
+                "G": 92,
+                "Y": 93,
+                "B": 94,
+                "M": 95,
+                "C": 96,
+                "W": 97,
+            }
+            fg = subs[fg]
+            bg = subs[bg] + 10
+
+            ret += "\033[%d;%dm" % (fg, bg)
         return ret
 
 
@@ -132,16 +153,22 @@ class BinFormatter(object):
         Whether to print the top or bottom edge of the bin.
     symbols : iterable
         The foreground symbols to be used for the histograms.
-    colors : iterable
-        The foreground colors (single digit hex value) to be used.
-        A value of 0 means the default terminal color.
+    fg_colors : iterable
+        The foreground colours to be used.
     bg_colors : iterable
-        The background colors (single digit hex value) to be used.
-        A value of 0 means "transparent".
+        The background colours to be used.
     stack : bool
         Whether to stack the histograms, or overlay them.
     use_color : bool
         Whether to use color output.
+
+    Notes
+    -----
+
+    Colours are specified as one character out of "0rgbcmykwRGBCMYKW". These
+    are mapped to the terminal's default colour scheme. A "0" denotes the
+    default foreground colour or "transparent" background. The capital letters
+    denote the bright versions of the lower case ones.
 
     """
 
@@ -154,9 +181,9 @@ class BinFormatter(object):
         tick_mark="_",
         no_tick_mark=" ",
         print_top_edge=False,
-        symbols=" |=",
-        colors="000",
-        bg_colors="300",
+        symbols=DEFAULT_SYMBOLS,
+        fg_colors=DEFAULT_FG_COLORS,
+        bg_colors=DEFAULT_BG_COLORS,
         stack=False,
         use_color=True,
     ):
@@ -168,7 +195,7 @@ class BinFormatter(object):
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
         self.symbols = symbols
-        self.colors = colors
+        self.fg_colors = fg_colors
         self.bg_colors = bg_colors
         self.stack = stack
         self.use_color = use_color
@@ -212,23 +239,25 @@ class BinFormatter(object):
 
             # Print symbols
             line = []
-            for h, s, c, bg in zip(heights, self.symbols, self.colors, self.bg_colors):
+            for h, s, fg, bg in zip(
+                heights, self.symbols, self.fg_colors, self.bg_colors
+            ):
                 if h:
                     if self.stack:
                         # Just print them all afer one another
-                        line += [Hixel(s, c, bg, self.use_color) for _ in range(h)]
+                        line += [Hixel(s, fg, bg, self.use_color) for _ in range(h)]
                     else:
                         # Overlay histograms
                         if h > len(line):
                             for hix in line:
-                                hix.add(s, c, bg)
+                                hix.add(s, fg, bg)
                             line += [
-                                Hixel(s, c, bg, self.use_color)
+                                Hixel(s, fg, bg, self.use_color)
                                 for _ in range(h - len(line))
                             ]
                         else:
                             for hix in line[:h]:
-                                hix.add(s, c, bg)
+                                hix.add(s, fg, bg)
 
             for hix in line:
                 bin_string += hix.render()
@@ -261,20 +290,13 @@ class HistFormatter(object):
         Whether the lines per bin should scale with the bin width.
     title : str
         Title string to print over the histogram.
-    stack : bool
-        Whether to stack or overlay the histograms.
+    **kwargs :
+        Additional keyword arguments are passed to the `BinFormatter`
 
     """
 
     def __init__(
-        self,
-        edges,
-        lines=23,
-        columns=79,
-        count_area=True,
-        scale_bin_width=True,
-        title="",
-        stack=False,
+        self, edges, lines=23, columns=79, scale_bin_width=True, title="", **kwargs
     ):
         self.title = title
         self.edges = edges
@@ -292,7 +314,7 @@ class HistFormatter(object):
             line_scale = np.max(edges[1:] - edges[:-1])
         self.bin_lines = ((edges[1:] - edges[:-1]) // line_scale).astype(int)
         self.bin_lines = np.where(self.bin_lines, self.bin_lines, 1)
-        self.bin_formatter = BinFormatter(stack=stack, count_area=count_area)
+        self.bin_formatter = BinFormatter(**kwargs)
 
     def format_histogram(self, counts):
         """Format (a set of) histogram counts."""
@@ -337,28 +359,41 @@ class HistFormatter(object):
         return hist_string
 
 
-def print_hist(hist, file=sys.stdout, title="", stack=False, count_area=True):
-    """plot the output of ``numpy.histogram`` to the console."""
+def print_hist(hist, file=sys.stdout, **kwargs):
+    """Plot the output of ``numpy.histogram`` to the console.
+
+    Arguments
+    ---------
+
+    file : optional
+        File like object to print to.
+    **kwargs :
+        Additional keyword arguments are passed to the `HistFormatter`.
+
+    """
 
     count, edges = hist
-    hist_formatter = HistFormatter(
-        edges, title=title, stack=stack, count_area=count_area
-    )
+    hist_formatter = HistFormatter(edges, **kwargs)
     print_(hist_formatter.format_histogram(count), end="", file=file)
 
 
 def text_hist(*args, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
 
-    file = kwargs.pop("file", sys.stdout)
-    title = kwargs.pop("title", "")
-    stack = kwargs.pop("stack", False)
-    count_area = kwargs.pop("count_area", True)
+    print_kwargs = {
+        "file": kwargs.pop("file", sys.stdout),
+        "title": kwargs.pop("title", ""),
+        "stack": kwargs.pop("stack", False),
+        "symbols": kwargs.pop("symbols", DEFAULT_SYMBOLS),
+        "fg_colors": kwargs.pop("fg_colors", DEFAULT_FG_COLORS),
+        "bg_colors": kwargs.pop("bg_colors", DEFAULT_BG_COLORS),
+        "count_area": kwargs.pop("count_area", True),
+    }
     density = kwargs.pop("density", False)
     if density:
-        count_area = False
+        print_kwargs["count_area"] = False
     hist = np.histogram(*args, density=density, **kwargs)
-    print_hist(hist, file=file, title=title, stack=stack, count_area=count_area)
+    print_hist(hist, **print_kwargs)
     return hist
 
 
@@ -380,6 +415,13 @@ def test_hist():
 
     print_hist(histAll, title="Overlays")
     print_hist(histAll, title="Stack", stack=True)
+    print_hist(
+        histAll,
+        title="Different Style",
+        symbols=r"\ /",
+        fg_colors="r0r",
+        bg_colors="0y0",
+    )
 
 
 if __name__ == "__main__":
