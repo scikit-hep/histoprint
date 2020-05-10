@@ -2,34 +2,58 @@
 
 from __future__ import division
 from six import print_, ensure_str
+from itertools import cycle
 
 import sys
 import numpy as np
 
-DEFAULT_SYMBOLS = " |="
-DEFAULT_FG_COLORS = "0WW"
-DEFAULT_BG_COLORS = "K00"
+DEFAULT_SYMBOLS = " |=/\\"
+DEFAULT_FG_COLORS = "0WWWWW"
+DEFAULT_BG_COLORS = "K00000"
 
 
 class Hixel(object):
     """The smallest unit of a histogram plot."""
 
     def __init__(self, char=" ", fg="0", bg="0", use_color=True):
-        self.character = char
+        self.character = " "
+        self.compose = " "
         self.fg_color = fg
         self.bg_color = bg
         self.use_color = use_color
+        self.add(char, fg, bg)
 
     def add(self, char=" ", fg="0", bg="0"):
         """Add another element on top."""
 
+        allowed = " =|\/"
+        if char not in allowed:
+            raise ValueError("Symbol not one of the allowed: '%s'" % (allowed,))
+
         if fg == self.fg_color:
             # Combine characters if possible
-            self.character = self.overlay_characters(self.character, char)
+            char_combinations = {
+                ("|", "="): "#",
+                ("=", "|"): "#",
+                ("#", "="): "#",
+                ("#", "|"): "#",
+            }
+            compose_chars = r"\/"
+            compose_combinations = {
+                ("/", "\\"): "X",
+                ("\\", "/"): "X",
+                (" ", "\\"): "\\",
+                (" ", "/"): "/",
+            }
+            if char in compose_chars:
+                self.compose = compose_combinations.get((self.compose, char))
+            else:
+                self.character = char_combinations.get((self.character, char), char)
         elif char != " ":
             # Otherwise overwrite if it is not a " "
-            self.character = char
+            self.character = " "
             self.fg_color = fg
+            self.add(char, fg, bg)
 
         if bg != "0":
             self.bg_color = bg
@@ -37,7 +61,7 @@ class Hixel(object):
     def render(self, reset=True):
         """Render the Hixel as a string."""
         ret = ""
-        if self.character == " " and self.bg_color != "0":
+        if self.character == " " and self.compose == " " and self.bg_color != "0":
             # Instead of printing a space with BG color,
             # print a full block with same FG color,
             # so the histogram can be copied to text editors.
@@ -45,59 +69,39 @@ class Hixel(object):
             ret += u"\u2588"
         else:
             ret += self.ansi_color_string(self.fg_color, self.bg_color)
-            ret += self.substitute_character(self.character)
+            ret += self.substitute_character(self.character, self.compose)
         if reset:
             ret += self.ansi_color_string("0", "0")
         return ret
 
     @staticmethod
-    def substitute_character(char):
+    def substitute_character(char, compose):
         r"""Replace some ASCII characters with better looking Unicode.
 
         Substitutions::
 
-            "-" -> "\u2500"
             "|" -> "\u2502"
             "=" -> "\u2550"
-            "+" -> "\u253C"
             "#" -> "\u256A"
+            "\" -> " \u20e5"
+            "/" -> " \u20eb"
+            "X" -> " \u20e5\u20eb"
 
         """
 
         subs = {
-            "-": u"\u2500",
             "|": u"\u2502",
             "=": u"\u2550",
-            "+": u"\u253C",
             "#": u"\u256A",
+            "\\": u"\u20e5",
+            "/": u"\u20eb",
+            "X": u"\u20e5\u20eb",
         }
 
-        return subs.get(char, char)
+        ret = subs.get(char, char)
+        ret += subs.get(compose, u"\u034f")
 
-    @staticmethod
-    def overlay_characters(char1, char2):
-        r"""Combine character to give the impression of drawing them both.
-
-        Possible combinations::
-
-            "-" + "|" -> "+"
-            "=" + "|" -> "#"
-            "/" + "\" -> "X"
-            " " + any -> any
-
-        """
-
-        subs = {
-            ("-", "|"): "+",
-            ("=", "|"): "#",
-            ("/", "\\"): "X",
-        }
-        if char2 == " ":
-            # if char2 is " " return char 1
-            return char1
-        else:
-            # Otherwise return char2 if there is no valid combination
-            return subs.get((char1, char2), subs.get((char2, char1), char2))
+        return ret
 
     def ansi_color_string(self, fg, bg):
         """Set the terminal color."""
@@ -240,7 +244,10 @@ class BinFormatter(object):
             # Print symbols
             line = []
             for h, s, fg, bg in zip(
-                heights, self.symbols, self.fg_colors, self.bg_colors
+                heights,
+                cycle(self.symbols),
+                cycle(self.fg_colors),
+                cycle(self.bg_colors),
             ):
                 if h:
                     if self.stack:
@@ -403,6 +410,7 @@ def test_hist():
     A = np.random.randn(1000) - 2
     B = np.random.randn(1000)
     C = np.random.randn(1000) + 2
+    D = np.random.randn(500) * 2
 
     text_hist(A, bins=10, title="10 bins")
     text_hist(A, bins=20, title="20 bins")
@@ -411,16 +419,17 @@ def test_hist():
     histA = np.histogram(A, bins=20, range=(-5, 5))
     histB = np.histogram(B, bins=20, range=(-5, 5))
     histC = np.histogram(C, bins=20, range=(-5, 5))
-    histAll = ([histA[0], histB[0], histC[0]], histA[1])
+    histD = np.histogram(D, bins=20, range=(-5, 5))
+    histAll = ([histA[0], histB[0], histC[0], histD[0]], histA[1])
 
     print_hist(histAll, title="Overlays")
-    print_hist(histAll, title="Stack", stack=True)
+    print_hist(histAll, title="Stack", stack=True, symbols="      ", bg_colors="rgbcmy")
     print_hist(
         histAll,
         title="Different Style",
-        symbols=r"\ /",
-        fg_colors="r0r",
-        bg_colors="0y0",
+        symbols=r"=|\/",
+        fg_colors="WWWW",
+        bg_colors="000m",
     )
 
 
