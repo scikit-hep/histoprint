@@ -297,19 +297,53 @@ class HistFormatter(object):
         Whether the lines per bin should scale with the bin width.
     title : str
         Title string to print over the histogram.
+    summary : bool
+        Whether to print a summary of the histograms.
+    labels : iterable
+        Labels the histograms.
     **kwargs :
         Additional keyword arguments are passed to the `BinFormatter`
+
+    Notes
+    -----
+
+    The `HistFormatter` will try to fit everything within the requested number
+    of lines, but this is not guaranteed. The final number of lines can be
+    bigger or smaller, depending on the number of bins and their widths.
 
     """
 
     def __init__(
-        self, edges, lines=23, columns=79, scale_bin_width=True, title="", **kwargs
+        self,
+        edges,
+        lines=23,
+        columns=79,
+        scale_bin_width=True,
+        title="",
+        labels=[""],
+        summary=False,
+        **kwargs
     ):
         self.title = title
         self.edges = edges
         self.lines = lines
         self.columns = columns
-        self.hist_lines = lines - 2
+        self.summary = summary
+        self.labels = labels
+
+        self.hist_lines = lines - 1  # Less one line for the first tick
+        if len(self.title):
+            # Make room for the title
+            self.hist_lines -= 1
+
+        self.summary = summary
+        if self.summary:
+            # Make room for a summary at the bottom
+            self.hist_lines -= 4
+        elif any([len(l) > 0 for l in self.labels]):
+            # Make room for a legend at the bottom
+            self.hist_lines -= 1
+
         if scale_bin_width:
             # Try to scale bins so the number of lines is
             # roughly proportional to the bin width
@@ -351,7 +385,8 @@ class HistFormatter(object):
         self.bin_formatter.scale = symbol_scale
 
         # Write the title line
-        hist_string = ("{:^%ds}\n" % (self.columns,)).format(self.title)
+        if len(self.title):
+            hist_string = ("{:^%ds}\n" % (self.columns,)).format(self.title)
 
         top = self.edges[:-1]
         bottom = self.edges[1:]
@@ -363,7 +398,67 @@ class HistFormatter(object):
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
             hist_string += self.bin_formatter.format_bin(t, b, c, w)
 
+        if self.summary:
+            hist_string += self.summarize(counts, top, bottom)
+        elif any([len(l) > 0 for l in self.labels]):
+            hist_string += self.summarize(counts, top, bottom, legend_only=True)
+
         return hist_string
+
+    def summarize(self, counts, top, bottom, legend_only=False):
+        """Calculate some summary statistics."""
+
+        summary = ""
+        bin_values = (top + bottom) / 2
+
+        label_widths = []
+
+        # First line: symbol, label
+        summary += "     "
+        for c, l, s, fg, bg in zip(
+            counts,
+            cycle(self.labels),
+            cycle(self.bin_formatter.symbols),
+            cycle(self.bin_formatter.fg_colors),
+            cycle(self.bin_formatter.bg_colors),
+        ):
+            # Pad label to make room for numbers below
+            l = "%-9s" % (l,)
+            label = " "
+            label += Hixel(s, fg, bg, self.bin_formatter.use_color).render()
+            label += " " + l
+            label_widths.append(3 + len(l))
+            summary += label
+        pad = max(self.columns - (5 + np.sum(label_widths)), 0) // 2
+        summary = " " * pad + summary
+        summary += "\n"
+
+        if legend_only:
+            return summary
+
+        # Second line: sum
+        summary += " " * pad + "Sum:"
+        for c, w in zip(counts, label_widths):
+            tot = np.sum(c)
+            summary += " % .2e" % (tot,) + " " * (w - 10)
+        summary += "\n"
+
+        # Third line: Average
+        summary += " " * pad + "Avg:"
+        for c, w in zip(counts, label_widths):
+            average = np.average(bin_values, weights=c)
+            summary += " % .2e" % (average,) + " " * (w - 10)
+        summary += "\n"
+
+        # Fourth line: std
+        summary += " " * pad + "Std:"
+        for c, w in zip(counts, label_widths):
+            average = np.average(bin_values, weights=c)
+            std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
+            summary += " % .2e" % (std,) + " " * (w - 10)
+        summary += "\n"
+
+        return summary
 
 
 def print_hist(hist, file=sys.stdout, **kwargs):
@@ -412,24 +507,33 @@ def test_hist():
     C = np.random.randn(1000) + 2
     D = np.random.randn(500) * 2
 
-    text_hist(A, bins=10, title="10 bins")
-    text_hist(A, bins=20, title="20 bins")
-    text_hist(A, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5], title="Variable bins")
+    text_hist(B, bins=10, title="10 bins")
+    text_hist(B, bins=15, title="15 bins")
+    text_hist(B, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5], title="Variable bins")
 
-    histA = np.histogram(A, bins=20, range=(-5, 5))
-    histB = np.histogram(B, bins=20, range=(-5, 5))
-    histC = np.histogram(C, bins=20, range=(-5, 5))
-    histD = np.histogram(D, bins=20, range=(-5, 5))
+    histA = np.histogram(A, bins=15, range=(-5, 5))
+    histB = np.histogram(B, bins=15, range=(-5, 5))
+    histC = np.histogram(C, bins=15, range=(-5, 5))
+    histD = np.histogram(D, bins=15, range=(-5, 5))
     histAll = ([histA[0], histB[0], histC[0], histD[0]], histA[1])
 
-    print_hist(histAll, title="Overlays")
-    print_hist(histAll, title="Stack", stack=True, symbols="      ", bg_colors="rgbcmy")
+    print_hist(histAll, title="Overlays", labels="ABCDE")
     print_hist(
         histAll,
-        title="Different Style",
+        title="Stack",
+        stack=True,
+        symbols="      ",
+        bg_colors="rgbcmy",
+        labels="ABCDE",
+    )
+    print_hist(
+        histAll,
+        title="Summaries",
         symbols=r"=|\/",
         fg_colors="WWWW",
         bg_colors="000m",
+        labels=["AAAAAAAAAAAAAAAA", "B", "CCCCCCCCCCCCC", "D"],
+        summary=True,
     )
 
 
