@@ -189,7 +189,7 @@ class BinFormatter(object):
         fg_colors=DEFAULT_FG_COLORS,
         bg_colors=DEFAULT_BG_COLORS,
         stack=False,
-        use_color=True,
+        use_color=None,
     ):
         self.scale = scale
         self.count_area = count_area
@@ -202,7 +202,13 @@ class BinFormatter(object):
         self.fg_colors = fg_colors
         self.bg_colors = bg_colors
         self.stack = stack
-        self.use_color = use_color
+        if use_color is None:
+            if any(c != "0" for c in fg_colors) or any(c != "0" for c in fg_colors):
+                self.use_color = True
+            else:
+                self.use_color = False
+        else:
+            self.use_color = use_color
 
     def format_bin(self, top, bottom, counts, width=1):
         """Return a string that represents the bin.
@@ -533,8 +539,8 @@ def test_hist():
         histAll,
         title="Summaries",
         symbols=r"=|\/",
-        fg_colors="WWWW",
-        bg_colors="000m",
+        fg_colors="0",
+        bg_colors="0",
         labels=["AAAAAAAAAAAAAAAA", "B", "CCCCCCCCCCCCC", "D"],
         summary=True,
     )
