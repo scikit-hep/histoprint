@@ -384,9 +384,11 @@ class HistFormatter(object):
         symbol_scale = np.max(c) / hist_width
         self.bin_formatter.scale = symbol_scale
 
+        hist_string = ""
+
         # Write the title line
         if len(self.title):
-            hist_string = ("{:^%ds}\n" % (self.columns,)).format(self.title)
+            hist_string += ("{:^%ds}\n" % (self.columns,)).format(self.title)
 
         top = self.edges[:-1]
         bottom = self.edges[1:]
@@ -507,9 +509,10 @@ def test_hist():
     C = np.random.randn(1000) + 2
     D = np.random.randn(500) * 2
 
-    text_hist(B, bins=10, title="10 bins")
-    text_hist(B, bins=15, title="15 bins")
-    text_hist(B, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5], title="Variable bins")
+    text_hist(B)
+    text_hist(
+        B, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5], title="Variable bin widths"
+    )
 
     histA = np.histogram(A, bins=15, range=(-5, 5))
     histB = np.histogram(B, bins=15, range=(-5, 5))
@@ -520,7 +523,7 @@ def test_hist():
     print_hist(histAll, title="Overlays", labels="ABCDE")
     print_hist(
         histAll,
-        title="Stack",
+        title="Stacks",
         stack=True,
         symbols="      ",
         bg_colors="rgbcmy",
