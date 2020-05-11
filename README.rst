@@ -77,3 +77,10 @@ The last example does not use terminal colors, so it can be copied as text::
            Sum:  9.99e+02           1.00e+03    9.99e+02        4.92e+02
            Avg: -1.98e+00           1.13e-02    1.99e+00       -1.71e-01
            Std:  1.03e+00           1.03e+00    9.94e-01        2.00e+00
+
+How to get it?
+--------------
+
+::
+
+    $ pip install [--user] histoprint
