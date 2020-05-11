@@ -15,6 +15,9 @@ Examples
 
 Some examples::
 
+    import numpy as np
+    from histoprint import text_hist, print_hist
+
     A = np.random.randn(1000) - 2
     B = np.random.randn(1000)
     C = np.random.randn(1000) + 2
