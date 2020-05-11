@@ -10,7 +10,7 @@ Pretty print numpy histograms to the console.
 
 setup(
     name="histoprint",
-    version="0.0.3",
+    version="0.0.4",
     description=description,
     long_description=long_description,
     url="https://github.com/ast0815/histoprint",
