@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
 setup(
     name="histoprint",
-    version="1.0.0",
+    version="1.0.1",
     description=description,
     long_description=long_description,
     url="https://github.com/ast0815/histoprint",
