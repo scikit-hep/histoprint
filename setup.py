@@ -8,6 +8,11 @@ Pretty print numpy histograms to the console.
 
 """
 
+if __name__ == "__main__":
+    # Read README
+    with open("README.rst") as f:
+        long_description = f.read()
+
 setup(
     name="histoprint",
     version="1.0.0",
