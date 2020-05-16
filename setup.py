@@ -15,14 +15,14 @@ if __name__ == "__main__":
 
 setup(
     name="histoprint",
-    version="1.0.1",
+    version="1.1.0",
     description=description,
     long_description=long_description,
     url="https://github.com/ast0815/histoprint",
     author="Lukas Koch",
     author_email="lukas.koch@mailbox.org",
     license="MIT",
-    py_modules=["histoprint"],
+    packages=["histoprint"],
     install_requires=["numpy>=1.0.0", "six>=1.10.0",],
     extras_require={},
     python_requires=">=2.7",
