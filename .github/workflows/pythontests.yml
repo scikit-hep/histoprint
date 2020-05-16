@@ -30,7 +30,7 @@ jobs:
         pip install -e .
     - name: Run test
       run: |
-        python -m histoprint
+        python -m histoprint.test
 
   black:
 
