@@ -87,7 +87,35 @@ Command line interface
 Histoprint also comes with a simple command line interface to create histograms
 of tabulated data. It can read in text files or directly from STDIN::
 
-    $ histoprint -t "**Title**" --summary -b "0.5 1.5 2.5 3.5 4.5" -lA -l B --fg-colors "0" --bg-colors "0" --symbols "|=" - <<EOF
+    $ histoprint --help
+    Usage: histoprint [OPTIONS] INFILE
+
+      Read INFILE and print a histogram of the contained columns.
+
+      INFILE can be '-', in which case the data is read from STDIN.
+
+    Options:
+      -b, --bins TEXT                 Number of bins or space-separated bin edges.
+      -t, --title TEXT                Title of the histogram.
+      --stack / --nostack             Stack the histograms.
+      -s, --summary / -S, --nosummary
+                                      Print summary statistics.
+      -l, --label TEXT                Labels for the data, one for each column.
+      --symbols TEXT                  Symbol cycle for multiple histograms.
+                                      Choices & default: ' |=/\'
+
+      --fg-colors TEXT                Colour cycle for foreground colours.
+                                      Default: '0WWWWW', Choices:
+                                      '0rgbcmykwRGBCMYKW'
+
+      --bg-colors TEXT                Colour cycle for background colours.
+                                      Default: 'K00000', Choices:
+                                      '0rgbcmykwRGBCMYKW'
+
+      --help                          Show this message and exit.
+
+
+    $ histoprint -t "Title" -s -b "0.5 1.5 2.5 3.5 4.5" -l A -l B --fg-colors "0" --bg-colors "0" --symbols "|=" - <<EOF
     1 2
     2 3
     2 3
@@ -95,7 +123,7 @@ of tabulated data. It can read in text files or directly from STDIN::
     3 4
     3 4
     EOF
-                                       **Title**
+                                         Title
      5.00e-01 _
                │͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏
                │͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏│͏
