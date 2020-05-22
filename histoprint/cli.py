@@ -28,7 +28,8 @@ import histoprint.formatter as formatter
 )
 @click.option(
     "-l",
-    "--labels",
+    "--label",
+    "labels",
     type=str,
     multiple=True,
     default=("",),
@@ -38,19 +39,22 @@ import histoprint.formatter as formatter
     "--symbols",
     type=str,
     default=formatter.DEFAULT_SYMBOLS,
-    help=f"Symbol cycle for multiple histograms. Default: '{formatter.DEFAULT_SYMBOLS}'",
+    help="Symbol cycle for multiple histograms. Choices & default: '%s'"
+    % (formatter.DEFAULT_SYMBOLS,),
 )
 @click.option(
     "--fg-colors",
     type=str,
     default=formatter.DEFAULT_FG_COLORS,
-    help="Colour cycle for foreground colours. Choices: 0rgbcmykwRGBCMYKW",
+    help="Colour cycle for foreground colours. Default: '%s', Choices: '0rgbcmykwRGBCMYKW'"
+    % (formatter.DEFAULT_FG_COLORS,),
 )
 @click.option(
     "--bg-colors",
     type=str,
     default=formatter.DEFAULT_BG_COLORS,
-    help="Colour cycle for background colours. Choices: 0rgbcmykwRGBCMYKW",
+    help="Colour cycle for background colours. Default: '%s', Choices: '0rgbcmykwRGBCMYKW'"
+    % (formatter.DEFAULT_BG_COLORS,),
 )
 def histoprint(infile, **kwargs):
     """Read INFILE and print a histogram of the contained columns.
