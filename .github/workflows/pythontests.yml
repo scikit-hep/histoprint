@@ -31,6 +31,11 @@ jobs:
     - name: Run test
       run: |
         python -m histoprint.test
+    - name: Run CLI
+      run: |
+        histoprint testdata/1D.txt
+        histoprint testdata/2D.txt
+        histoprint testdata/3D.txt -s -l A -l B -l C -t "HISTOPRINT"
 
   black:
 

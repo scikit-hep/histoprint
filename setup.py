@@ -23,7 +23,7 @@ setup(
     author_email="lukas.koch@mailbox.org",
     license="MIT",
     packages=["histoprint"],
-    install_requires=["numpy>=1.0.0", "six>=1.10.0",],
+    install_requires=["numpy>=1.0.0", "six>=1.10.0", "click>=7.0.0"],
     extras_require={},
     python_requires=">=2.7",
     classifiers=[
@@ -44,5 +44,9 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
     ],
+    entry_points="""
+        [console_scripts]
+        histoprint=histoprint.cli:histoprint
+    """,
     zip_safe=True,
 )

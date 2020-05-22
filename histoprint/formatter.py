@@ -139,8 +139,8 @@ class Hixel(object):
 class BinFormatter(object):
     """Class that turns bin contents into text.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
 
     scale : float
         The scale of the histogram, i.e. one text character corresponds to
@@ -215,8 +215,8 @@ class BinFormatter(object):
     def format_bin(self, top, bottom, counts, width=1):
         """Return a string that represents the bin.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
 
         top : float
             The top edge of the bin
@@ -294,8 +294,8 @@ class BinFormatter(object):
 class HistFormatter(object):
     """Class that handles the formating of histograms.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
 
     lines, columns : int
         The number of lines and maximum numbre of columns of the output.
@@ -357,7 +357,7 @@ class HistFormatter(object):
             # roughly proportional to the bin width
             line_scale = ((edges[-1] - edges[0]) / self.hist_lines) * 0.999
         else:
-            # Choose the larges bin as scale,
+            # Choose the largest bin as scale,
             # so all bins will scale to <= 1 lines
             # and be rendered with one line
             line_scale = np.max(edges[1:] - edges[:-1])
@@ -388,7 +388,7 @@ class HistFormatter(object):
             # Bin content will be divided by number of lines
             c = c / self.bin_lines
 
-        # Set a scale so that largest bin wills width of allocated area
+        # Set a scale so that largest bin fills width of allocated area
         symbol_scale = np.max(c) / hist_width
         self.bin_formatter.scale = symbol_scale
 
@@ -446,8 +446,8 @@ class HistFormatter(object):
         if legend_only:
             return summary
 
-        # Second line: sum
-        summary += " " * pad + "Sum:"
+        # Second line: Total
+        summary += " " * pad + "Tot:"
         for c, w in zip(counts, label_widths):
             tot = np.sum(c)
             summary += " % .2e" % (tot,) + " " * (w - 10)
@@ -474,8 +474,8 @@ class HistFormatter(object):
 def print_hist(hist, file=sys.stdout, **kwargs):
     """Plot the output of ``numpy.histogram`` to the console.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
 
     file : optional
         File like object to print to.
