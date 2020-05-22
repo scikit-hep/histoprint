@@ -105,13 +105,14 @@ of tabulated data. It can read in text files or directly from STDIN::
                                       Choices & default: ' |=/\'
 
       --fg-colors TEXT                Colour cycle for foreground colours.
-                                      Default: '0WWWWW', Choices:
+                                      Default: 'WWWWW', Choices:
                                       '0rgbcmykwRGBCMYKW'
 
       --bg-colors TEXT                Colour cycle for background colours.
-                                      Default: 'K00000', Choices:
+                                      Default: 'K0000', Choices:
                                       '0rgbcmykwRGBCMYKW'
 
+      --version                       Show the version and exit.
       --help                          Show this message and exit.
 
 
