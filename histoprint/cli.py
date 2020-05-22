@@ -56,6 +56,7 @@ import histoprint.formatter as formatter
     help="Colour cycle for background colours. Default: '%s', Choices: '0rgbcmykwRGBCMYKW'"
     % (formatter.DEFAULT_BG_COLORS,),
 )
+@click.version_option()
 def histoprint(infile, **kwargs):
     """Read INFILE and print a histogram of the contained columns.
 
