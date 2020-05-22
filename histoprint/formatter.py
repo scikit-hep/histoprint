@@ -67,7 +67,9 @@ class Hixel(object):
             # Instead of printing a space with BG color,
             # print a full block with same FG color,
             # so the histogram can be copied to text editors.
-            ret += self.ansi_color_string(self.bg_color, self.bg_color)
+            # Replace BG colour with opposite brightness,
+            # so it shows when the text is selected in a terminal.
+            ret += self.ansi_color_string(self.bg_color, self.bg_color.swapcase())
             ret += u"\u2588"
         else:
             ret += self.ansi_color_string(self.fg_color, self.bg_color)
