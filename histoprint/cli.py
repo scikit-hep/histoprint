@@ -67,7 +67,7 @@ def histoprint(infile, **kwargs):
 
     # Interpret bins
     bins = kwargs.pop("bins", "10")
-    bins = [float(x) for x in bins.split(" ")]
+    bins = np.fromiter(bins.split(), dtype=float)
     if len(bins) == 1:
         bins = int(bins[0])
     if isinstance(bins, int):
