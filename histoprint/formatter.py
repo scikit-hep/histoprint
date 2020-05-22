@@ -8,8 +8,8 @@ import sys
 import numpy as np
 
 DEFAULT_SYMBOLS = " |=/\\"
-DEFAULT_FG_COLORS = "0WWWWW"
-DEFAULT_BG_COLORS = "K00000"
+DEFAULT_FG_COLORS = "WWWWW"
+DEFAULT_BG_COLORS = "K0000"
 
 __all__ = ["print_hist", "text_hist", "HistFormatter"]
 
