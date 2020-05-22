@@ -139,8 +139,8 @@ class Hixel(object):
 class BinFormatter(object):
     """Class that turns bin contents into text.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
 
     scale : float
         The scale of the histogram, i.e. one text character corresponds to
@@ -215,8 +215,8 @@ class BinFormatter(object):
     def format_bin(self, top, bottom, counts, width=1):
         """Return a string that represents the bin.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
 
         top : float
             The top edge of the bin
@@ -294,8 +294,8 @@ class BinFormatter(object):
 class HistFormatter(object):
     """Class that handles the formating of histograms.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
 
     lines, columns : int
         The number of lines and maximum numbre of columns of the output.
@@ -474,8 +474,8 @@ class HistFormatter(object):
 def print_hist(hist, file=sys.stdout, **kwargs):
     """Plot the output of ``numpy.histogram`` to the console.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
 
     file : optional
         File like object to print to.
