@@ -41,5 +41,51 @@ def test_hist():
     )
 
 
+def test_boost():
+    """Test boost-histogram if it is available."""
+
+    try:
+        import boost_histogram as bh
+    except:
+        return
+
+    hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
+    hist.fill(np.random.randn(1000))
+    print_hist(hist, title="Boost Histogram")
+
+
+def test_uproot():
+    """Test uproot hsitograms if t is available."""
+
+    try:
+        import uproot
+    except:
+        return
+
+    import uproot_methods.classes.TH1
+
+    class Cls(object):
+        pass
+
+    class MyTH1(uproot_methods.classes.TH1.Methods, list):
+        def __init__(self, low, high, values, title=""):
+            self._fXaxis = Cls()
+            self._fXaxis._fNbins = len(values)
+            self._fXaxis._fXmin = low
+            self._fXaxis._fXmax = high
+            self.append(0.0)  # underflow
+            for x in values:
+                self.append(float(x))
+            self.append(0.0)  # overflow
+            self._fTitle = title
+            self._classname = "TH1F"
+
+    hist = MyTH1(-5, 5, [3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2])
+    hist.show()
+    print_hist(hist, title="uproot TH1")
+
+
 if __name__ == "__main__":
     test_hist()
+    test_boost()
+    test_uproot()

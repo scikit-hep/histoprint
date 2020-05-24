@@ -2,13 +2,15 @@
 histoprint
 ==========
 
-Pretty print Numpy histograms to the console
+Pretty print Numpy (and other) histograms to the console
+
 
 How does it work?
 -----------------
 
 Histoprint uses a mix of terminal color codes and unicode trickery (i.e.
 combining characters) to plot overlaying histograms.
+
 
 Examples
 --------
@@ -81,6 +83,7 @@ The last example does not use terminal colors, so it can be copied as text::
            Avg: -1.98e+00           1.13e-02    1.99e+00       -1.71e-01
            Std:  1.03e+00           1.03e+00    9.94e-01        2.00e+00
 
+
 Command line interface
 ----------------------
 
@@ -105,13 +108,14 @@ of tabulated data. It can read in text files or directly from STDIN::
                                       Choices & default: ' |=/\'
 
       --fg-colors TEXT                Colour cycle for foreground colours.
-                                      Default: '0WWWWW', Choices:
+                                      Default: 'WWWWW', Choices:
                                       '0rgbcmykwRGBCMYKW'
 
       --bg-colors TEXT                Colour cycle for background colours.
-                                      Default: 'K00000', Choices:
+                                      Default: 'K0000', Choices:
                                       '0rgbcmykwRGBCMYKW'
 
+      --version                       Show the version and exit.
       --help                          Show this message and exit.
 
 
@@ -145,6 +149,26 @@ of tabulated data. It can read in text files or directly from STDIN::
                              Tot:  6.00e+00    5.00e+00
                              Avg:  2.17e+00    3.20e+00
                              Std:  6.87e-01    7.48e-01
+
+
+Support for other histogram types
+---------------------------------
+
+Histoprint can directly plot other (more fancy) types of histograms if they
+offer a way of being converted to the Numpy format. Currently this means they
+have to expose a ``numpy()`` or ``to_numpy()`` method. Both the ``TH1``
+histograms of uproot, as well as the histograms of boost-histogram are
+supported like this::
+
+    import boost_histogram as bh
+    hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
+    hist.fill(np.random.randn(1000))
+    print_hist(hist, title="Boost Histogram")
+
+    import uproot
+    file = uproot.open("http://scikit-hep.org/uproot/examples/Event.root")
+    hist = file["htime"]
+    print_hist(hist, title="uproot TH1")
 
 
 How to get it?

@@ -1,15 +1,15 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
 from __future__ import division
-from six import print_, ensure_str
 from itertools import cycle
 
 import sys
 import numpy as np
+import click
 
 DEFAULT_SYMBOLS = " |=/\\"
-DEFAULT_FG_COLORS = "0WWWWW"
-DEFAULT_BG_COLORS = "K00000"
+DEFAULT_FG_COLORS = "WWWWW"
+DEFAULT_BG_COLORS = "K0000"
 
 __all__ = ["print_hist", "text_hist", "HistFormatter"]
 
@@ -67,7 +67,9 @@ class Hixel(object):
             # Instead of printing a space with BG color,
             # print a full block with same FG color,
             # so the histogram can be copied to text editors.
-            ret += self.ansi_color_string(self.bg_color, self.bg_color)
+            # Replace BG colour with opposite brightness,
+            # so it shows when the text is selected in a terminal.
+            ret += self.ansi_color_string(self.bg_color, self.bg_color.swapcase())
             ret += u"\u2588"
         else:
             ret += self.ansi_color_string(self.fg_color, self.bg_color)
@@ -205,7 +207,7 @@ class BinFormatter(object):
         self.bg_colors = bg_colors
         self.stack = stack
         if use_color is None:
-            if any(c != "0" for c in fg_colors) or any(c != "0" for c in fg_colors):
+            if any(c != "0" for c in fg_colors) or any(c != "0" for c in bg_colors):
                 self.use_color = True
             else:
                 self.use_color = False
@@ -324,8 +326,8 @@ class HistFormatter(object):
     def __init__(
         self,
         edges,
-        lines=23,
-        columns=79,
+        lines=None,
+        columns=None,
         scale_bin_width=True,
         title="",
         labels=[""],
@@ -334,6 +336,13 @@ class HistFormatter(object):
     ):
         self.title = title
         self.edges = edges
+        # Fit histograms into the terminal, unless otherwise specified
+        term_size = click.get_terminal_size()
+        if columns is None:
+            columns = term_size[0] - 1
+        if lines is None:
+            # Try to keep a constant aspect ratio
+            lines = min(int(columns / 3.5) + 1, term_size[1] - 1)
         self.lines = lines
         self.columns = columns
         self.summary = summary
@@ -355,7 +364,9 @@ class HistFormatter(object):
         if scale_bin_width:
             # Try to scale bins so the number of lines is
             # roughly proportional to the bin width
-            line_scale = ((edges[-1] - edges[0]) / self.hist_lines) * 0.999
+            line_scale = (
+                (edges[-1] - edges[0]) / self.hist_lines
+            ) * 0.999  # <- avoid rounding issues
         else:
             # Choose the largest bin as scale,
             # so all bins will scale to <= 1 lines
@@ -378,31 +389,48 @@ class HistFormatter(object):
             # Make sure counts is a 2D array
             counts = counts[np.newaxis, ...]
 
+        # Get max or total counts in each bin
         if self.bin_formatter.stack:
             # Bin content will be sum of all histograms
-            c = np.sum(counts, axis=0)
+            tot_c = np.sum(counts, axis=0)
         else:
             # Bin content will be maximum of all histograms
-            c = np.max(counts, axis=0)
+            tot_c = np.max(counts, axis=0)
+
+        # Get bin lengths
         if self.bin_formatter.count_area:
             # Bin content will be divided by number of lines
-            c = c / self.bin_lines
+            c = tot_c / self.bin_lines
+        else:
+            c = tot_c
 
         # Set a scale so that largest bin fills width of allocated area
         symbol_scale = np.max(c) / hist_width
-        self.bin_formatter.scale = symbol_scale
+        self.bin_formatter.scale = symbol_scale * 0.999  # <- avoid rounding issues
 
         hist_string = ""
 
         # Write the title line
         if len(self.title):
-            hist_string += ("{:^%ds}\n" % (self.columns,)).format(self.title)
+            hist_string += ("{: ^%ds}\n" % (self.columns,)).format(self.title)
 
         top = self.edges[:-1]
         bottom = self.edges[1:]
 
-        # Write the first tick
-        hist_string += self.bin_formatter.tick(top[0]) + "\n"
+        # Write the first tick and horizontal axis
+        hist_string += self.bin_formatter.tick(top[0])
+        longest_count = tot_c[np.argmax(c)]
+        if np.issubdtype(longest_count.dtype, np.integer):
+            hist_string += (u"{: %dd} \u2577\n" % (hist_width - 2,)).format(
+                longest_count
+            )
+        else:
+            # Pad with spaces
+            hist_string += " " * (hist_width - axis_width)
+            # The tick value
+            hist_string += self.bin_formatter.tick_format % (longest_count,)
+            # The tick
+            hist_string += u"\u2577\n"
 
         # Write the bins
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
@@ -471,7 +499,31 @@ class HistFormatter(object):
         return summary
 
 
-def print_hist(hist, file=sys.stdout, **kwargs):
+def get_count_edges(hist):
+    """Get bin contents and edges from a compatible histogram."""
+
+    # Try the boost-histogram interface
+    try:
+        hist = hist.to_numpy()
+    except:
+        pass
+
+    # Try the uproot interface
+    try:
+        hist = hist.numpy()
+    except:
+        pass
+
+    # Try the Numpy interface
+    try:
+        count, edges = hist
+    except ValueError:
+        raise ValueError("Not a compatible histogram!")
+
+    return count, edges
+
+
+def print_hist(hist, file=click.get_text_stream("stdout"), **kwargs):
     """Plot the output of ``numpy.histogram`` to the console.
 
     Parameters
@@ -484,16 +536,16 @@ def print_hist(hist, file=sys.stdout, **kwargs):
 
     """
 
-    count, edges = hist
+    count, edges = get_count_edges(hist)
     hist_formatter = HistFormatter(edges, **kwargs)
-    print_(ensure_str(hist_formatter.format_histogram(count)), end="", file=file)
+    click.echo(hist_formatter.format_histogram(count), nl=False, file=file)
 
 
 def text_hist(*args, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
 
     print_kwargs = {
-        "file": kwargs.pop("file", sys.stdout),
+        "file": kwargs.pop("file", click.get_text_stream("stdout")),
         "title": kwargs.pop("title", ""),
         "stack": kwargs.pop("stack", False),
         "symbols": kwargs.pop("symbols", DEFAULT_SYMBOLS),
