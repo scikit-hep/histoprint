@@ -357,7 +357,9 @@ class HistFormatter(object):
         if scale_bin_width:
             # Try to scale bins so the number of lines is
             # roughly proportional to the bin width
-            line_scale = ((edges[-1] - edges[0]) / self.hist_lines) * 0.999
+            line_scale = (
+                (edges[-1] - edges[0]) / self.hist_lines
+            ) * 0.999  # <- avoid rounding issues
         else:
             # Choose the largest bin as scale,
             # so all bins will scale to <= 1 lines
@@ -397,7 +399,7 @@ class HistFormatter(object):
 
         # Set a scale so that largest bin fills width of allocated area
         symbol_scale = np.max(c) / hist_width
-        self.bin_formatter.scale = symbol_scale
+        self.bin_formatter.scale = symbol_scale * 0.999  # <- avoid rounding issues
 
         hist_string = ""
 
