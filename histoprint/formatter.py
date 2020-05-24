@@ -326,8 +326,8 @@ class HistFormatter(object):
     def __init__(
         self,
         edges,
-        lines=23,
-        columns=79,
+        lines=None,
+        columns=None,
         scale_bin_width=True,
         title="",
         labels=[""],
@@ -336,6 +336,13 @@ class HistFormatter(object):
     ):
         self.title = title
         self.edges = edges
+        # Fit histograms into the terminal, unless otherwise specified
+        term_size = click.get_terminal_size()
+        if columns is None:
+            columns = term_size[0] - 1
+        if lines is None:
+            # Try to keep a constant aspect ratio
+            lines = min(int(columns / 3.5) + 1, term_size[1] - 1)
         self.lines = lines
         self.columns = columns
         self.summary = summary
