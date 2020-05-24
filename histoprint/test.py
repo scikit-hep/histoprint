@@ -62,12 +62,14 @@ def test_uproot():
     except:
         return
 
-    import types
     import uproot_methods.classes.TH1
+
+    class Cls(object):
+        pass
 
     class MyTH1(uproot_methods.classes.TH1.Methods, list):
         def __init__(self, low, high, values, title=""):
-            self._fXaxis = types.SimpleNamespace()
+            self._fXaxis = Cls()
             self._fXaxis._fNbins = len(values)
             self._fXaxis._fXmin = low
             self._fXaxis._fXmax = high
