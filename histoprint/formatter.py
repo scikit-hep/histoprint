@@ -523,7 +523,7 @@ def get_count_edges(hist):
     return count, edges
 
 
-def print_hist(hist, file=sys.stdout, **kwargs):
+def print_hist(hist, file=click.get_text_stream("stdout"), **kwargs):
     """Plot the output of ``numpy.histogram`` to the console.
 
     Parameters
@@ -545,7 +545,7 @@ def text_hist(*args, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
 
     print_kwargs = {
-        "file": kwargs.pop("file", sys.stdout),
+        "file": kwargs.pop("file", click.get_text_stream("stdout")),
         "title": kwargs.pop("title", ""),
         "stack": kwargs.pop("stack", False),
         "symbols": kwargs.pop("symbols", DEFAULT_SYMBOLS),
