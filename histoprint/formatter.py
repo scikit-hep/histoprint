@@ -1,11 +1,11 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
 from __future__ import division
-from six import print_, ensure_str
 from itertools import cycle
 
 import sys
 import numpy as np
+import click
 
 DEFAULT_SYMBOLS = " |=/\\"
 DEFAULT_FG_COLORS = "WWWWW"
@@ -502,7 +502,7 @@ def print_hist(hist, file=sys.stdout, **kwargs):
 
     count, edges = get_count_edges(hist)
     hist_formatter = HistFormatter(edges, **kwargs)
-    print_(ensure_str(hist_formatter.format_histogram(count)), end="", file=file)
+    click.echo(hist_formatter.format_histogram(count), nl=False, file=file)
 
 
 def text_hist(*args, **kwargs):
