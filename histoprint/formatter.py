@@ -380,15 +380,20 @@ class HistFormatter(object):
             # Make sure counts is a 2D array
             counts = counts[np.newaxis, ...]
 
+        # Get max or total counts in each bin
         if self.bin_formatter.stack:
             # Bin content will be sum of all histograms
-            c = np.sum(counts, axis=0)
+            tot_c = np.sum(counts, axis=0)
         else:
             # Bin content will be maximum of all histograms
-            c = np.max(counts, axis=0)
+            tot_c = np.max(counts, axis=0)
+
+        # Get bin lengths
         if self.bin_formatter.count_area:
             # Bin content will be divided by number of lines
-            c = c / self.bin_lines
+            c = tot_c / self.bin_lines
+        else:
+            c = tot_c
 
         # Set a scale so that largest bin fills width of allocated area
         symbol_scale = np.max(c) / hist_width
@@ -398,13 +403,25 @@ class HistFormatter(object):
 
         # Write the title line
         if len(self.title):
-            hist_string += ("{:^%ds}\n" % (self.columns,)).format(self.title)
+            hist_string += ("{: ^%ds}\n" % (self.columns,)).format(self.title)
 
         top = self.edges[:-1]
         bottom = self.edges[1:]
 
-        # Write the first tick
-        hist_string += self.bin_formatter.tick(top[0]) + "\n"
+        # Write the first tick and horizontal axis
+        hist_string += self.bin_formatter.tick(top[0])
+        longest_count = tot_c[np.argmax(c)]
+        if np.issubdtype(longest_count.dtype, np.integer):
+            hist_string += (u"{: %dd} \u2577\n" % (hist_width - 2,)).format(
+                longest_count
+            )
+        else:
+            # Pad with spaces
+            hist_string += " " * (hist_width - axis_width)
+            # The tick value
+            hist_string += self.bin_formatter.tick_format % (longest_count,)
+            # The tick
+            hist_string += u"\u2577\n"
 
         # Write the bins
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
