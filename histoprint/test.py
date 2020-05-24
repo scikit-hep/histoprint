@@ -41,5 +41,19 @@ def test_hist():
     )
 
 
+def test_boost():
+    """Test boost-histogram if it is available."""
+
+    try:
+        import boost_histogram as bh
+    except:
+        return
+
+    hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
+    hist.fill(np.random.randn(1000))
+    print_hist(hist, title="Boost Histogram")
+
+
 if __name__ == "__main__":
     test_hist()
+    test_boost()

@@ -473,6 +473,20 @@ class HistFormatter(object):
         return summary
 
 
+def get_count_edges(hist):
+    """Get bin contents and edges from a compatible histogram."""
+
+    try:
+        hist = hist.to_numpy()
+    except:
+        pass
+    try:
+        count, edges = hist
+    except ValueError:
+        raise ValueError("Not a compatible histogram!")
+    return count, edges
+
+
 def print_hist(hist, file=sys.stdout, **kwargs):
     """Plot the output of ``numpy.histogram`` to the console.
 
@@ -486,7 +500,7 @@ def print_hist(hist, file=sys.stdout, **kwargs):
 
     """
 
-    count, edges = hist
+    count, edges = get_count_edges(hist)
     hist_formatter = HistFormatter(edges, **kwargs)
     print_(ensure_str(hist_formatter.format_histogram(count)), end="", file=file)
 
