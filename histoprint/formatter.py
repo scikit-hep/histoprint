@@ -495,14 +495,24 @@ class HistFormatter(object):
 def get_count_edges(hist):
     """Get bin contents and edges from a compatible histogram."""
 
+    # Try the boost-histogram interface
     try:
         hist = hist.to_numpy()
     except:
         pass
+
+    # Try the uproot interface
+    try:
+        hist = hist.numpy()
+    except:
+        pass
+
+    # Try the Numpy interface
     try:
         count, edges = hist
     except ValueError:
         raise ValueError("Not a compatible histogram!")
+
     return count, edges
 
 

@@ -28,9 +28,9 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install -e .
-    - name: Install boost-histogram if possible
+    - name: Install optional dependencies for tests
       run: |
-        pip install boost-histogram || true
+        pip install boost-histogram uproot || true
     - name: Run tests
       run: |
         python -m histoprint.test
