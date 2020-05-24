@@ -207,7 +207,7 @@ class BinFormatter(object):
         self.bg_colors = bg_colors
         self.stack = stack
         if use_color is None:
-            if any(c != "0" for c in fg_colors) or any(c != "0" for c in fg_colors):
+            if any(c != "0" for c in fg_colors) or any(c != "0" for c in bg_colors):
                 self.use_color = True
             else:
                 self.use_color = False
