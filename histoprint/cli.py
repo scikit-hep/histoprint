@@ -102,6 +102,7 @@ def histoprint(infile, **kwargs):
     click.echo("Could not interpret file format.", err=True)
     exit(1)
 
+
 def _bin_edges(kwargs, data):
     """Get the desired bin edges."""
     bins = kwargs.pop("bins", "10")
@@ -204,7 +205,7 @@ def _histoprint_root(infile, **kwargs):
 
     # Get default columns labels
     if kwargs.get("labels", ("",)) == ("",):
-        kwargs["labels"] = [f.split('/')[-1] for f in fields]
+        kwargs["labels"] = [f.split("/")[-1] for f in fields]
 
     # Read the data
     if len(fields) == 1:
@@ -214,23 +215,29 @@ def _histoprint_root(infile, **kwargs):
         except (AttributeError, KeyError):
             pass
         else:
-            kwargs.pop("bins", None) # Get rid of useless parameter
+            kwargs.pop("bins", None)  # Get rid of useless parameter
             print_hist(hist, **kwargs)
             return
 
     data = []
     for field in fields:
         branch = f
-        for key in field.split('/'):
+        for key in field.split("/"):
             try:
                 branch = branch[key]
             except KeyError:
-                click.echo("Could not find key '%s'. Possible values: %s"%(key, branch.keys()))
+                click.echo(
+                    "Could not find key '%s'. Possible values: %s"
+                    % (key, branch.keys())
+                )
                 exit(1)
         try:
             d = np.array(branch.array().flatten())
         except ValueError:
-            click.echo("Could not interpret root object '%s'. Possible child branches: %s"%(key, branch.keys()))
+            click.echo(
+                "Could not interpret root object '%s'. Possible child branches: %s"
+                % (key, branch.keys())
+            )
             exit(1)
         data.append(d)
 
