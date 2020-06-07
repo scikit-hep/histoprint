@@ -115,6 +115,17 @@ of tabulated data. It can read in text files or directly from STDIN::
                                       Default: 'K0000', Choices:
                                       '0rgbcmykwRGBCMYKW'
 
+      -f, --field TEXT                Which fields to histogram. Interpretation of
+                                      the fields depends on the file format. TXT
+                                      files only support integers for column
+                                      numbers starting at 0. For CSV files, the
+                                      fields must be the names of the columns as
+                                      specified in the first line of the file.
+                                      When plotting from ROOT files, at least one
+                                      field must be specified. This can either be
+                                      the path to a single TH1, or one or more
+                                      paths to TTree branches.
+
       --version                       Show the version and exit.
       --help                          Show this message and exit.
 

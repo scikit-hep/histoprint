@@ -7,7 +7,7 @@ import histoprint.formatter as formatter
 
 
 @click.command()
-@click.argument("infile", type=click.File("rt"))
+@click.argument("infile", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
 @click.option(
     "-b",
     "--bins",
@@ -56,6 +56,19 @@ import histoprint.formatter as formatter
     help="Colour cycle for background colours. Default: '%s', Choices: '0rgbcmykwRGBCMYKW'"
     % (formatter.DEFAULT_BG_COLORS,),
 )
+@click.option(
+    "-f",
+    "--field",
+    "fields",
+    type=str,
+    multiple=True,
+    help="Which fields to histogram. Interpretation of the fields depends on "
+    "the file format. TXT files only support integers for column numbers "
+    "starting at 0. For CSV files, the fields must be the names of the columns "
+    "as specified in the first line of the file. When plotting from ROOT files, "
+    "at least one field must be specified. This can either be the path to a "
+    "single TH1, or one or more paths to TTree branches.",
+)
 @click.version_option()
 def histoprint(infile, **kwargs):
     """Read INFILE and print a histogram of the contained columns.
@@ -63,22 +76,177 @@ def histoprint(infile, **kwargs):
     INFILE can be '-', in which case the data is read from STDIN.
     """
 
-    # Read the data
-    data = np.loadtxt(infile, ndmin=2)
+    # Try to interpret file as textfile
+    try:
+        _histoprint_txt(infile, **kwargs)
+        exit(0)
+    except ValueError:
+        pass
 
-    # Interpret bins
+    # Try to interpret file as CSV file
+    try:
+        _histoprint_csv(infile, **kwargs)
+        exit(0)
+    except ImportError:
+        click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
+    except UnicodeDecodeError:
+        pass
+
+    # Try to interpret file as ROOT file
+    try:
+        _histoprint_root(infile, **kwargs)
+        exit(0)
+    except ImportError:
+        click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
+
+    click.echo("Could not interpret file format.", err=True)
+    exit(1)
+
+
+def _bin_edges(kwargs, data):
+    """Get the desired bin edges."""
     bins = kwargs.pop("bins", "10")
     bins = np.fromiter(bins.split(), dtype=float)
     if len(bins) == 1:
         bins = int(bins[0])
     if isinstance(bins, int):
-        minval = np.nanmin(data)
-        maxval = np.nanmax(data)
+        minval = np.inf
+        maxval = -np.inf
+        for d in data:
+            minval = min(minval, np.nanmin(d))
+            maxval = max(maxval, np.nanmax(d))
         bins = np.linspace(minval, maxval, bins + 1)
+    return bins
+
+
+def _histoprint_txt(infile, **kwargs):
+    """Interpret file as as simple whitespace separated table."""
+
+    # Read the data
+    data = np.loadtxt(click.open_file(infile), ndmin=2)
+    data = data.T
+
+    # Interpret field numbers
+    fields = kwargs.pop("fields", [])
+    if len(fields) > 0:
+        try:
+            fields = [int(f) for f in fields]
+        except ValueError:
+            click.echo("Fields for a TXT file must be integers.", err=True)
+            exit(1)
+        try:
+            data = data[fields]
+        except KeyError:
+            click.echo("Field out of bounds.", err=True)
+            exit(1)
+
+    # Interpret bins
+    bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
     hist = [[], bins]
-    for d in data.T:
+    for d in data:
+        hist[0].append(np.histogram(d, bins=bins)[0])
+
+    # Print the histogram
+    print_hist(hist, **kwargs)
+
+
+def _histoprint_csv(infile, **kwargs):
+    """Interpret file as as CSV file."""
+
+    import pandas as pd
+
+    # Read the data
+    data = pd.read_csv(click.open_file(infile))
+
+    # Interpret field numbers/names
+    fields = list(kwargs.pop("fields", []))
+    if len(fields) > 0:
+        try:
+            data = data[fields]
+        except KeyError:
+            click.echo("Unknown column name.", err=True)
+            exit(1)
+
+    # Get default columns labels
+    if kwargs.get("labels", ("",)) == ("",):
+        kwargs["labels"] = data.columns
+
+    # Convert to array
+    data = data.to_numpy().T
+
+    # Interpret bins
+    bins = _bin_edges(kwargs, data)
+
+    # Create the histogram(s)
+    hist = [[], bins]
+    for d in data:
+        hist[0].append(np.histogram(d, bins=bins)[0])
+
+    # Print the histogram
+    print_hist(hist, **kwargs)
+
+
+def _histoprint_root(infile, **kwargs):
+    """Interpret file as as ROOT file."""
+
+    import uproot as up
+
+    # Open root file
+    F = up.open(infile)
+
+    # Interpret field names
+    fields = list(kwargs.pop("fields", []))
+    if len(fields) == 0:
+        click.echo("Must specify at least on field for ROOT files.", err=True)
+        click.echo(F.keys())
+        exit(1)
+
+    # Get default columns labels
+    if kwargs.get("labels", ("",)) == ("",):
+        kwargs["labels"] = [field.split("/")[-1] for field in fields]
+
+    # Read the data
+    if len(fields) == 1:
+        # Possible a single histogram
+        try:
+            hist = F[fields[0]].numpy()
+        except (AttributeError, KeyError):
+            pass
+        else:
+            kwargs.pop("bins", None)  # Get rid of useless parameter
+            print_hist(hist, **kwargs)
+            return
+
+    data = []
+    for field in fields:
+        branch = F
+        for key in field.split("/"):
+            try:
+                branch = branch[key]
+            except KeyError:
+                click.echo(
+                    "Could not find key '%s'. Possible values: %s"
+                    % (key, branch.keys())
+                )
+                exit(1)
+        try:
+            d = np.array(branch.array().flatten())
+        except ValueError:
+            click.echo(
+                "Could not interpret root object '%s'. Possible child branches: %s"
+                % (key, branch.keys())
+            )
+            exit(1)
+        data.append(d)
+
+    # Interpret bins
+    bins = _bin_edges(kwargs, data)
+
+    # Create the histogram(s)
+    hist = [[], bins]
+    for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
     # Print the histogram
