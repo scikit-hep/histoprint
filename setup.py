@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
 setup(
     name="histoprint",
-    version="1.3.0",
+    version="1.4.0",
     description=description,
     long_description=long_description,
     url="https://github.com/scikit-hep/histoprint",
