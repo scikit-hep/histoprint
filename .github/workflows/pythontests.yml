@@ -30,7 +30,7 @@ jobs:
         pip install -e .
     - name: Install optional dependencies for tests
       run: |
-        pip install boost-histogram uproot || true
+        pip install boost-histogram uproot pandas || true
     - name: Run tests
       run: |
         python -m histoprint.test
@@ -41,6 +41,9 @@ jobs:
         histoprint testdata/3D.txt -s -l A -l B -l C -t "HISTOPRINT"
         histoprint testdata/3D.txt -s -f 0 -l A -f 2 -l C
         histoprint testdata/3D.csv -s -f x -f z
+        wget http://scikit-hep.org/uproot/examples/Event.root
+        histoprint -s Event.root -f T/event/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast
+        histoprint -s Event.root -f htime
 
   black:
 

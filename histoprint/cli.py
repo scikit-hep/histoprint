@@ -7,7 +7,7 @@ import histoprint.formatter as formatter
 
 
 @click.command()
-@click.argument("infile", type=click.File("rt"))
+@click.argument("infile", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
 @click.option(
     "-b",
     "--bins",
@@ -65,7 +65,9 @@ import histoprint.formatter as formatter
     help="Which fields to histogram. Interpretation of the fields depends on "
     "the file format. TXT files only support integers for column numbers "
     "starting at 0. For CSV files, the fields must be the names of the columns "
-    "as specified in the first line of the file.",
+    "as specified in the first line of the file. When plotting from ROOT files, "
+    "at least one field must be specified. This can either be the path to a "
+    "single TH1, or one or more paths to TTree branches.",
 )
 @click.version_option()
 def histoprint(infile, **kwargs):
@@ -79,15 +81,23 @@ def histoprint(infile, **kwargs):
         _histoprint_txt(infile, **kwargs)
         exit(0)
     except ValueError:
-        infile.seek(0)
+        pass
 
     # Try to interpret file as CSV file
     try:
         _histoprint_csv(infile, **kwargs)
         exit(0)
     except ModuleNotFoundError:
-        infile.seek(0)
         click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
+    except UnicodeDecodeError:
+        pass
+
+    # Try to interpret file as ROOT file
+    try:
+        _histoprint_root(infile, **kwargs)
+        exit(0)
+    except ModuleNotFoundError:
+        click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
 
     click.echo("Could not interpret file format.", err=True)
     exit(1)
@@ -99,8 +109,11 @@ def _bin_edges(kwargs, data):
     if len(bins) == 1:
         bins = int(bins[0])
     if isinstance(bins, int):
-        minval = np.nanmin(data)
-        maxval = np.nanmax(data)
+        minval = np.inf
+        maxval = -np.inf
+        for d in data:
+            minval = min(minval, np.nanmin(d))
+            maxval = max(maxval, np.nanmax(d))
         bins = np.linspace(minval, maxval, bins + 1)
     return bins
 
@@ -109,14 +122,22 @@ def _histoprint_txt(infile, **kwargs):
     """Interpret file as as simple whitespace separated table."""
 
     # Read the data
-    data = np.loadtxt(infile, ndmin=2)
+    data = np.loadtxt(click.open_file(infile), ndmin=2)
     data = data.T
 
     # Interpret field numbers
     fields = kwargs.pop("fields", [])
     if len(fields) > 0:
-        fields = [int(f) for f in fields]
-        data = data.T[fields]
+        try:
+            fields = [int(f) for f in fields]
+        except ValueError:
+            click.echo("Fields for a TXT file must be integers.", err=True)
+            exit(1)
+        try:
+            data = data[fields]
+        except KeyError:
+            click.echo("Field out of bounds.", err=True)
+            exit(1)
 
     # Interpret bins
     bins = _bin_edges(kwargs, data)
@@ -136,12 +157,16 @@ def _histoprint_csv(infile, **kwargs):
     import pandas as pd
 
     # Read the data
-    data = pd.read_csv(infile, sep=None, header=0)
+    data = pd.read_csv(click.open_file(infile))
 
     # Interpret field numbers/names
     fields = list(kwargs.pop("fields", []))
     if len(fields) > 0:
-        data = data[fields]
+        try:
+            data = data[fields]
+        except KeyError:
+            click.echo("Unknown column name.", err=True)
+            exit(1)
 
     # Get default columns labels
     if kwargs.get("labels", ("",)) == ("",):
@@ -149,6 +174,65 @@ def _histoprint_csv(infile, **kwargs):
 
     # Convert to array
     data = data.to_numpy().T
+
+    # Interpret bins
+    bins = _bin_edges(kwargs, data)
+
+    # Create the histogram(s)
+    hist = [[], bins]
+    for d in data:
+        hist[0].append(np.histogram(d, bins=bins)[0])
+
+    # Print the histogram
+    print_hist(hist, **kwargs)
+
+
+def _histoprint_root(infile, **kwargs):
+    """Interpret file as as ROOT file."""
+
+    import uproot as up
+
+    # Open root file
+    f = up.open(infile)
+
+    # Interpret field names
+    fields = list(kwargs.pop("fields", []))
+    if len(fields) == 0:
+        click.echo("Must specify at least on field for ROOT files.", err=True)
+        click.echo(f.keys())
+        exit(1)
+
+    # Get default columns labels
+    if kwargs.get("labels", ("",)) == ("",):
+        kwargs["labels"] = [f.split('/')[-1] for f in fields]
+
+    # Read the data
+    if len(fields) == 1:
+        # Possible a single histogram
+        try:
+            hist = f[fields[0]].numpy()
+        except (AttributeError, KeyError):
+            pass
+        else:
+            kwargs.pop("bins", None) # Get rid of useless parameter
+            print_hist(hist, **kwargs)
+            return
+
+    data = []
+    for field in fields:
+        branch = f
+        for key in field.split('/'):
+            try:
+                branch = branch[key]
+            except KeyError:
+                click.echo("Could not find key '%s'. Possible values: %s"%(key, branch.keys()))
+                exit(1)
+        try:
+            d = np.array(branch.array().flatten())
+        except ValueError:
+            click.echo("Could not interpret root object '%s'. Possible child branches: %s"%(key, branch.keys()))
+            exit(1)
+        data.append(d)
 
     # Interpret bins
     bins = _bin_edges(kwargs, data)

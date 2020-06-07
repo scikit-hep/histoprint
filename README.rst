@@ -121,6 +121,10 @@ of tabulated data. It can read in text files or directly from STDIN::
                                       numbers starting at 0. For CSV files, the
                                       fields must be the names of the columns as
                                       specified in the first line of the file.
+                                      When plotting from ROOT files, at least one
+                                      field must be specified. This can either be
+                                      the path to a single TH1, or one or more
+                                      paths to TTree branches.
 
       --version                       Show the version and exit.
       --help                          Show this message and exit.
