@@ -116,9 +116,11 @@ of tabulated data. It can read in text files or directly from STDIN::
                                       '0rgbcmykwRGBCMYKW'
 
       -f, --field TEXT                Which fields to histogram. Interpretation of
-                                      the fields depends onthe file format. TXT
+                                      the fields depends on the file format. TXT
                                       files only support integers for column
-                                      numbersstarting at 0.
+                                      numbers starting at 0. For CSV files, the
+                                      fields must be the names of the columns as
+                                      specified in the first line of the file.
 
       --version                       Show the version and exit.
       --help                          Show this message and exit.

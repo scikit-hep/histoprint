@@ -62,9 +62,10 @@ import histoprint.formatter as formatter
     "fields",
     type=str,
     multiple=True,
-    help="Which fields to histogram. Interpretation of the fields depends on"
-    "the file format. TXT files only support integers for column numbers"
-    "starting at 0.",
+    help="Which fields to histogram. Interpretation of the fields depends on "
+    "the file format. TXT files only support integers for column numbers "
+    "starting at 0. For CSV files, the fields must be the names of the columns "
+    "as specified in the first line of the file.",
 )
 @click.version_option()
 def histoprint(infile, **kwargs):
@@ -74,25 +75,22 @@ def histoprint(infile, **kwargs):
     """
 
     # Try to interpret file as textfile
-    _histoprint_txt(infile, **kwargs)
-    exit(0)
+    try:
+        _histoprint_txt(infile, **kwargs)
+        exit(0)
+    except ValueError:
+        infile.seek(0)
+
+    # Try to interpret file as CSV file
+    try:
+        _histoprint_csv(infile, **kwargs)
+        exit(0)
+    except ValueError:
+        infile.seek(0)
 
 
-def _histoprint_txt(infile, **kwargs):
-    """Interpret file as as simple whitespace separated table."""
-
-    # Read the data
-    data = np.loadtxt(infile, ndmin=2)
-
-    # Interpret field numbers
-    fields = kwargs.pop("fields", None)
-    if len(fields) == 0:
-        data = data.T
-    else:
-        fields = [int(f) for f in fields]
-        data = data.T[fields]
-
-    # Interpret bins
+def _bin_edges(kwargs, data):
+    """Get the desired bin edges."""
     bins = kwargs.pop("bins", "10")
     bins = np.fromiter(bins.split(), dtype=float)
     if len(bins) == 1:
@@ -101,6 +99,56 @@ def _histoprint_txt(infile, **kwargs):
         minval = np.nanmin(data)
         maxval = np.nanmax(data)
         bins = np.linspace(minval, maxval, bins + 1)
+    return bins
+
+
+def _histoprint_txt(infile, **kwargs):
+    """Interpret file as as simple whitespace separated table."""
+
+    # Read the data
+    data = np.loadtxt(infile, ndmin=2)
+    data = data.T
+
+    # Interpret field numbers
+    fields = kwargs.pop("fields", [])
+    if len(fields) > 0:
+        fields = [int(f) for f in fields]
+        data = data.T[fields]
+
+    # Interpret bins
+    bins = _bin_edges(kwargs, data)
+
+    # Create the histogram(s)
+    hist = [[], bins]
+    for d in data:
+        hist[0].append(np.histogram(d, bins=bins)[0])
+
+    # Print the histogram
+    print_hist(hist, **kwargs)
+
+
+def _histoprint_csv(infile, **kwargs):
+    """Interpret file as as CSV file."""
+
+    import pandas as pd
+
+    # Read the data
+    data = pd.read_csv(infile, sep=None, header=0)
+
+    # Interpret field numbers/names
+    fields = list(kwargs.pop("fields", []))
+    if len(fields) > 0:
+        data = data[fields]
+
+    # Get default columns labels
+    if kwargs.get("labels", ("",)) == ("",):
+        kwargs["labels"] = data.columns
+
+    # Convert to array
+    data = data.to_numpy().T
+
+    # Interpret bins
+    bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
     hist = [[], bins]

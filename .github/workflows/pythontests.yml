@@ -40,6 +40,7 @@ jobs:
         histoprint testdata/2D.txt
         histoprint testdata/3D.txt -s -l A -l B -l C -t "HISTOPRINT"
         histoprint testdata/3D.txt -s -f 0 -l A -f 2 -l C
+        histoprint testdata/3D.csv -s -f x -f z
 
   black:
 
