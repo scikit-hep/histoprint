@@ -194,24 +194,24 @@ def _histoprint_root(infile, **kwargs):
     import uproot as up
 
     # Open root file
-    f = up.open(infile)
+    F = up.open(infile)
 
     # Interpret field names
     fields = list(kwargs.pop("fields", []))
     if len(fields) == 0:
         click.echo("Must specify at least on field for ROOT files.", err=True)
-        click.echo(f.keys())
+        click.echo(F.keys())
         exit(1)
 
     # Get default columns labels
     if kwargs.get("labels", ("",)) == ("",):
-        kwargs["labels"] = [f.split("/")[-1] for f in fields]
+        kwargs["labels"] = [field.split("/")[-1] for field in fields]
 
     # Read the data
     if len(fields) == 1:
         # Possible a single histogram
         try:
-            hist = f[fields[0]].numpy()
+            hist = F[fields[0]].numpy()
         except (AttributeError, KeyError):
             pass
         else:
@@ -221,7 +221,7 @@ def _histoprint_root(infile, **kwargs):
 
     data = []
     for field in fields:
-        branch = f
+        branch = F
         for key in field.split("/"):
             try:
                 branch = branch[key]
