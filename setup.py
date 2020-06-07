@@ -18,7 +18,7 @@ setup(
     version="1.3.0",
     description=description,
     long_description=long_description,
-    url="https://github.com/ast0815/histoprint",
+    url="https://github.com/scikit-hep/histoprint",
     author="Lukas Koch",
     author_email="lukas.koch@mailbox.org",
     license="MIT",
