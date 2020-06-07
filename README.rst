@@ -88,7 +88,7 @@ Command line interface
 ----------------------
 
 Histoprint also comes with a simple command line interface to create histograms
-of tabulated data. It can read in text files or directly from STDIN::
+of tabulated data. It can read in files or take data directly from STDIN::
 
     $ histoprint --help
     Usage: histoprint [OPTIONS] INFILE
