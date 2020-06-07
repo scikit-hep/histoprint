@@ -87,7 +87,7 @@ def histoprint(infile, **kwargs):
     try:
         _histoprint_csv(infile, **kwargs)
         exit(0)
-    except ModuleNotFoundError:
+    except ImportError:
         click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
     except UnicodeDecodeError:
         pass
@@ -96,7 +96,7 @@ def histoprint(infile, **kwargs):
     try:
         _histoprint_root(infile, **kwargs)
         exit(0)
-    except ModuleNotFoundError:
+    except ImportError:
         click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
 
     click.echo("Could not interpret file format.", err=True)
