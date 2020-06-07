@@ -85,9 +85,12 @@ def histoprint(infile, **kwargs):
     try:
         _histoprint_csv(infile, **kwargs)
         exit(0)
-    except ValueError:
+    except ModuleNotFoundError:
         infile.seek(0)
+        click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
 
+    click.echo("Could not interpret file format.", err=True)
+    exit(1)
 
 def _bin_edges(kwargs, data):
     """Get the desired bin edges."""
