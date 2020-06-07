@@ -56,6 +56,16 @@ import histoprint.formatter as formatter
     help="Colour cycle for background colours. Default: '%s', Choices: '0rgbcmykwRGBCMYKW'"
     % (formatter.DEFAULT_BG_COLORS,),
 )
+@click.option(
+    "-f",
+    "--field",
+    "fields",
+    type=str,
+    multiple=True,
+    help="Which fields to histogram. Interpretation of the fields depends on"
+    "the file format. TXT files only support integers for column numbers"
+    "starting at 0.",
+)
 @click.version_option()
 def histoprint(infile, **kwargs):
     """Read INFILE and print a histogram of the contained columns.
@@ -63,8 +73,24 @@ def histoprint(infile, **kwargs):
     INFILE can be '-', in which case the data is read from STDIN.
     """
 
+    # Try to interpret file as textfile
+    _histoprint_txt(infile, **kwargs)
+    exit(0)
+
+
+def _histoprint_txt(infile, **kwargs):
+    """Interpret file as as simple whitespace separated table."""
+
     # Read the data
     data = np.loadtxt(infile, ndmin=2)
+
+    # Interpret field numbers
+    fields = kwargs.pop("fields", None)
+    if len(fields) == 0:
+        data = data.T
+    else:
+        fields = [int(f) for f in fields]
+        data = data.T[fields]
 
     # Interpret bins
     bins = kwargs.pop("bins", "10")
@@ -78,7 +104,7 @@ def histoprint(infile, **kwargs):
 
     # Create the histogram(s)
     hist = [[], bins]
-    for d in data.T:
+    for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
     # Print the histogram

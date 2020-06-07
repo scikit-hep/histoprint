@@ -115,6 +115,11 @@ of tabulated data. It can read in text files or directly from STDIN::
                                       Default: 'K0000', Choices:
                                       '0rgbcmykwRGBCMYKW'
 
+      -f, --field TEXT                Which fields to histogram. Interpretation of
+                                      the fields depends onthe file format. TXT
+                                      files only support integers for column
+                                      numbersstarting at 0.
+
       --version                       Show the version and exit.
       --help                          Show this message and exit.
 
