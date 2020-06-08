@@ -2,6 +2,8 @@
 histoprint
 ==========
 
+|Scikit-HEP|
+
 Pretty print Numpy (and other) histograms to the console
 
 
@@ -188,3 +190,6 @@ How to get it?
 ::
 
     $ pip install [--user] histoprint
+
+.. |Scikit-HEP| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
+   :target: https://scikit-hep.org/
