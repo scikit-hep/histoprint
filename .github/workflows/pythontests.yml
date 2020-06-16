@@ -27,13 +27,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install -e .
+        python -m pip install -e .[test]
     - name: Install optional dependencies for tests
       run: |
         pip install boost-histogram uproot pandas || true
     - name: Run tests
       run: |
-        python -m histoprint.test
+        python -m pytest tests/test.py
     - name: Run CLI
       run: |
         histoprint tests/data/1D.txt
