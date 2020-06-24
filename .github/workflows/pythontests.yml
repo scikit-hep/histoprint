@@ -33,7 +33,7 @@ jobs:
         pip install boost-histogram uproot pandas || true
     - name: Run tests
       run: |
-        python -m pytest tests/test.py
+        python -m pytest -s tests/test.py
     - name: Run CLI
       run: |
         histoprint tests/data/1D.txt
