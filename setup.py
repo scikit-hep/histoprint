@@ -13,6 +13,8 @@ if __name__ == "__main__":
     with open("README.rst") as f:
         long_description = f.read()
 
+extras = {"test": ["pytest"]}
+
 setup(
     name="histoprint",
     version="1.4.0",
@@ -24,7 +26,8 @@ setup(
     license="MIT",
     packages=["histoprint"],
     install_requires=["numpy>=1.0.0", "click>=7.0.0"],
-    extras_require={},
+    extras_require=extras,
+    tests_require=extras["test"],
     python_requires=">=2.7",
     classifiers=[
         # How mature is this project? Common values are
