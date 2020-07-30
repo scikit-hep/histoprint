@@ -1,4 +1,5 @@
 from setuptools import setup
+
 # make open consistent between py2 and py3 as we need encoding param
 from io import open
 
