@@ -1,4 +1,6 @@
 from setuptools import setup
+# make open consistent between py2 and py3 as we need encoding param
+from io import open
 
 # Todo: Parse this from a proper readme file in the future
 description = "histoprint"
@@ -10,7 +12,7 @@ Pretty print numpy histograms to the console.
 
 if __name__ == "__main__":
     # Read README
-    with open("README.rst") as f:
+    with open("README.rst", mode="r", encoding="utf-8") as f:
         long_description = f.read()
 
 extras = {"test": ["pytest"]}
