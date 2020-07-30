@@ -20,7 +20,7 @@ extras = {"test": ["pytest"]}
 
 setup(
     name="histoprint",
-    version="1.4.0",
+    version="1.4.1",
     description=description,
     long_description=long_description,
     url="https://github.com/scikit-hep/histoprint",
