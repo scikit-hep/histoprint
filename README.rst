@@ -191,5 +191,9 @@ How to get it?
 
     $ pip install [--user] histoprint
 
+::
+
+    $ conda install -c conda-forge histoprint
+
 .. |Scikit-HEP| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
    :target: https://scikit-hep.org/
