@@ -39,6 +39,14 @@ def test_hist():
         labels=["AAAAAAAAAAAAAAAA", "B", "CCCCCCCCCCCCC", "D"],
         summary=True,
     )
+    print_hist(
+        (histAll[0][:3], histAll[1]),
+        title="No composition",
+        symbols=r" =|",
+        fg_colors="000",
+        bg_colors="y00",
+        labels=["AAAAAAAAAAAAAAAA", "B", "CCCCCCCCCCCCC", "D"],
+    )
 
 
 def test_boost():
