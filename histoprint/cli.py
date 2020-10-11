@@ -77,7 +77,7 @@ import histoprint.formatter as formatter
     help="Total width of the displayed historgram in characters. Defaults to width of the terminal.",
 )
 @click.option(
-    "-l",
+    "-r",
     "--lines",
     type=int,
     default=None,
