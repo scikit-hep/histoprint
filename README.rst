@@ -211,5 +211,4 @@ To disable the use of combining characters, simply do not use them when calling
     print_hist(some_histograms, symbols=" =|")
 
 The combining characters are ``/`` and ``\``. Note that they are used in the
-default set of characters, so the ``symbols`` argument must be explicitly set
-to disable them.
+default set of characters for the 4th and 5th histogram if they are present.
