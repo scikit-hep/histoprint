@@ -90,21 +90,39 @@ def histoprint(infile, **kwargs):
     INFILE can be '-', in which case the data is read from STDIN.
     """
 
-    # Try to interpret file as textfile
+    # Read file into buffer for use by implementations
     try:
-        _histoprint_txt(infile, **kwargs)
-        exit(0)
-    except ValueError:
-        pass
-
-    # Try to interpret file as CSV file
-    try:
-        _histoprint_csv(infile, **kwargs)
-        exit(0)
-    except ImportError:
-        click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
+        with click.open_file(infile, "rt") as f:
+            data = f.read(-1)
     except UnicodeDecodeError:
-        pass
+        # Probably some binary file
+        data = ""
+
+    if len(data) > 0:
+        try:
+            # Python 2
+            from StringIO import StringIO
+        except ModuleNotFoundError:
+            # Python 3
+            from io import StringIO
+        data_handle = StringIO(data)
+        del data
+
+        # Try to interpret file as textfile
+        try:
+            data_handle.seek(0)
+            _histoprint_txt(data_handle, **kwargs)
+            exit(0)
+        except ValueError:
+            pass
+
+        # Try to interpret file as CSV file
+        try:
+            data_handle.seek(0)
+            _histoprint_csv(data_handle, **kwargs)
+            exit(0)
+        except ImportError:
+            click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
 
     # Try to interpret file as ROOT file
     try:
@@ -137,7 +155,7 @@ def _histoprint_txt(infile, **kwargs):
     """Interpret file as as simple whitespace separated table."""
 
     # Read the data
-    data = np.loadtxt(click.open_file(infile), ndmin=2)
+    data = np.loadtxt(infile, ndmin=2)
     data = data.T
 
     # Interpret field numbers
@@ -172,7 +190,7 @@ def _histoprint_csv(infile, **kwargs):
     import pandas as pd
 
     # Read the data
-    data = pd.read_csv(click.open_file(infile))
+    data = pd.read_csv(infile)
 
     # Interpret field numbers/names
     fields = list(kwargs.pop("fields", []))
