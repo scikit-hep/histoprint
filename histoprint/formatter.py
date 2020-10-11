@@ -251,7 +251,7 @@ class BinFormatter(object):
         heights = [int(c // scale) for c in counts]
 
         # Decide whether to use composing characters
-        for s in self.symbols[:len(counts)]:
+        for s in self.symbols[: len(counts)]:
             if s in COMPOSING_SYMBOLS:
                 self.compose = " "
                 break
