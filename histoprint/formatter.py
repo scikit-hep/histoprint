@@ -213,12 +213,6 @@ class BinFormatter(object):
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
         self.symbols = symbols
-        for s in symbols:
-            if s in COMPOSING_SYMBOLS:
-                self.compose = " "
-                break
-        else:
-            self.compose = None
         self.fg_colors = fg_colors
         self.bg_colors = bg_colors
         self.stack = stack
@@ -255,6 +249,14 @@ class BinFormatter(object):
 
         # Calculate bin heights in characters
         heights = [int(c // scale) for c in counts]
+
+        # Decide whether to use composing characters
+        for s in self.symbols[: len(counts)]:
+            if s in COMPOSING_SYMBOLS:
+                self.compose = " "
+                break
+        else:
+            self.compose = None
 
         # Format bin
         bin_string = ""
