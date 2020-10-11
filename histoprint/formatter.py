@@ -64,7 +64,11 @@ class Hixel(object):
     def render(self, reset=True):
         """Render the Hixel as a string."""
         ret = ""
-        if self.character == " " and (self.compose == " " or self.compose is None) and self.bg_color != "0":
+        if (
+            self.character == " "
+            and (self.compose == " " or self.compose is None)
+            and self.bg_color != "0"
+        ):
             # Instead of printing a space with BG color,
             # print a full block with same FG color,
             # so the histogram can be copied to text editors.
@@ -275,7 +279,10 @@ class BinFormatter(object):
                 if h:
                     if self.stack:
                         # Just print them all afer one another
-                        line += [Hixel(s, fg, bg, self.use_color, self.compose) for _ in range(h)]
+                        line += [
+                            Hixel(s, fg, bg, self.use_color, self.compose)
+                            for _ in range(h)
+                        ]
                     else:
                         # Overlay histograms
                         if h > len(line):
@@ -476,7 +483,9 @@ class HistFormatter(object):
             # Pad label to make room for numbers below
             l = "%-9s" % (l,)
             label = " "
-            label += Hixel(s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose).render()
+            label += Hixel(
+                s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose
+            ).render()
             label += " " + l
             label_widths.append(3 + len(l))
             summary += label
