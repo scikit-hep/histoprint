@@ -102,7 +102,7 @@ def histoprint(infile, **kwargs):
         try:
             # Python 2
             from StringIO import StringIO
-        except ModuleNotFoundError:
+        except ImportError:
             # Python 3
             from io import StringIO
         data_handle = StringIO(data)
