@@ -219,7 +219,6 @@ class BinFormatter(object):
                 break
         else:
             self.compose = None
-        print("AAAA", self.compose)
         self.fg_colors = fg_colors
         self.bg_colors = bg_colors
         self.stack = stack
