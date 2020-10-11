@@ -213,8 +213,14 @@ class BinFormatter(object):
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
         self.symbols = symbols
+        if self.symbols == "":
+            self.symbols = " "
         self.fg_colors = fg_colors
+        if self.fg_colors == "":
+            self.fg_colors = "0"
         self.bg_colors = bg_colors
+        if self.bg_colors == "":
+            self.bg_colors = "0"
         self.stack = stack
         if use_color is None:
             if any(c != "0" for c in fg_colors) or any(c != "0" for c in bg_colors):
