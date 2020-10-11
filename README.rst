@@ -10,8 +10,11 @@ Pretty print Numpy (and other) histograms to the console
 How does it work?
 -----------------
 
-Histoprint uses a mix of terminal color codes and unicode trickery (i.e.
-combining characters) to plot overlaying histograms.
+Histoprint uses a mix of terminal color codes and Unicode trickery (i.e.
+combining characters) to plot overlaying histograms. Some terminals are not
+able to display Unicode combining characters correctly. Histopront can still be
+used in those terminals, but the character set needs to be constrained to the
+non-combining ones (see below).
 
 
 Examples
@@ -197,3 +200,16 @@ How to get it?
 
 .. |Scikit-HEP| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
    :target: https://scikit-hep.org/
+
+Disabling Unicode combining characters
+--------------------------------------
+
+Some terminals are not able to display Unicode combining characters correctly.
+To disable the use of combining characters, simply do not use them when calling
+``print_hist``::
+
+    print_hist(some_histograms, symbols=" =|")
+
+The combining characters are ``/`` and ``\``. Note that they are used in the
+default set of characters, so the ``symbols`` argument must be explicitly set
+to disable them.

@@ -8,6 +8,7 @@ import numpy as np
 import click
 
 DEFAULT_SYMBOLS = " |=/\\"
+COMPOSING_SYMBOLS = "/\\"
 DEFAULT_FG_COLORS = "WWWWW"
 DEFAULT_BG_COLORS = "K0000"
 
@@ -17,9 +18,9 @@ __all__ = ["print_hist", "text_hist", "HistFormatter"]
 class Hixel(object):
     """The smallest unit of a histogram plot."""
 
-    def __init__(self, char=" ", fg="0", bg="0", use_color=True):
+    def __init__(self, char=" ", fg="0", bg="0", use_color=True, compose=" "):
         self.character = " "
-        self.compose = " "
+        self.compose = compose
         self.fg_color = fg
         self.bg_color = bg
         self.use_color = use_color
@@ -63,7 +64,7 @@ class Hixel(object):
     def render(self, reset=True):
         """Render the Hixel as a string."""
         ret = ""
-        if self.character == " " and self.compose == " " and self.bg_color != "0":
+        if self.character == " " and (self.compose == " " or self.compose is None) and self.bg_color != "0":
             # Instead of printing a space with BG color,
             # print a full block with same FG color,
             # so the histogram can be copied to text editors.
@@ -100,9 +101,14 @@ class Hixel(object):
             "\\": u"\u20e5",
             "/": u"\u20eb",
             "X": u"\u20e5\u20eb",
+            None: u"",
         }
 
         ret = subs.get(char, char)
+        # Characters can be displayed differently when they have a composing character on top.
+        # This looks ugly if some Hixels of a histogram are covered by another and some are not.
+        # Unless explicitly asked for no compositio, if no composition is added,
+        # use empty composition character to make them all display the same.
         ret += subs.get(compose, u"\u034f")
 
         return ret
@@ -203,6 +209,13 @@ class BinFormatter(object):
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
         self.symbols = symbols
+        for s in symbols:
+            if s in COMPOSING_SYMBOLS:
+                self.compose = " "
+                break
+        else:
+            self.compose = None
+        print("AAAA", self.compose)
         self.fg_colors = fg_colors
         self.bg_colors = bg_colors
         self.stack = stack
@@ -262,14 +275,14 @@ class BinFormatter(object):
                 if h:
                     if self.stack:
                         # Just print them all afer one another
-                        line += [Hixel(s, fg, bg, self.use_color) for _ in range(h)]
+                        line += [Hixel(s, fg, bg, self.use_color, self.compose) for _ in range(h)]
                     else:
                         # Overlay histograms
                         if h > len(line):
                             for hix in line:
                                 hix.add(s, fg, bg)
                             line += [
-                                Hixel(s, fg, bg, self.use_color)
+                                Hixel(s, fg, bg, self.use_color, self.compose)
                                 for _ in range(h - len(line))
                             ]
                         else:
@@ -463,7 +476,7 @@ class HistFormatter(object):
             # Pad label to make room for numbers below
             l = "%-9s" % (l,)
             label = " "
-            label += Hixel(s, fg, bg, self.bin_formatter.use_color).render()
+            label += Hixel(s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose).render()
             label += " " + l
             label_widths.append(3 + len(l))
             summary += label
