@@ -131,6 +131,14 @@ of tabulated data. It can read in files or take data directly from STDIN::
                                       the path to a single TH1, or one or more
                                       paths to TTree branches.
 
+      -c, --columns INTEGER           Total width of the displayed historgram in
+                                      characters. Defaults to width of the
+                                      terminal.
+
+      -r, --lines INTEGER             Approximate total height of the displayed
+                                      historgram in characters. Calculated from
+                                      number of columns by default.
+
       --version                       Show the version and exit.
       --help                          Show this message and exit.
 
