@@ -1,4 +1,6 @@
 from setuptools import setup
+import setuptools_scm  # noqa: F401
+import toml  # noqa: F401
 
 # make open consistent between py2 and py3 as we need encoding param
 from io import open
@@ -20,7 +22,6 @@ extras = {"test": ["pytest"]}
 
 setup(
     name="histoprint",
-    version="1.5.1",
     description=description,
     long_description=long_description,
     url="https://github.com/scikit-hep/histoprint",
