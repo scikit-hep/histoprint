@@ -242,7 +242,7 @@ def _histoprint_root(infile, **kwargs):
     # Interpret field names
     fields = list(kwargs.pop("fields", []))
     if len(fields) == 0:
-        click.echo("Must specify at least on field for ROOT files.", err=True)
+        click.echo("Must specify at least one field for ROOT files.", err=True)
         click.echo(F.keys())
         exit(1)
 
@@ -259,13 +259,10 @@ def _histoprint_root(infile, **kwargs):
             pass  # Deal with key error further down
         else:
             try:
-                hist = hist.numpy()  # Uproot 3
+                hist = F[fields[0]].to_numpy()
             except AttributeError:
-                try:
-                    hist = F[fields[0]].to_numpy()  # Uproot 4
-                except AttributeError:
-                    hist = None
-            if hist is not None:
+                pass
+            else:
                 kwargs.pop("bins", None)  # Get rid of useless parameter
                 print_hist(hist, **kwargs)
                 return
