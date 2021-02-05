@@ -289,7 +289,7 @@ def _histoprint_root(infile, **kwargs):
                 # If not, turn into value error
                 raise ValueError
             try:  # Uproot >= 4.0 and Awkward >= 1.0 ?
-                d = ak.to_numpy(d)
+                d = ak.to_numpy(ak.flatten(d))
             except AttributeError:
                 pass
             d = np.array(d.flatten())
