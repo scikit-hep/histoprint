@@ -43,7 +43,7 @@ jobs:
         histoprint tests/data/3D.txt -s -f 0 -l A -f 2 -l C
         histoprint tests/data/3D.csv -s -f x -f z
         wget http://scikit-hep.org/uproot3/examples/Event.root
-        histoprint -s Event.root -f T/event/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast
+        histoprint -s Event.root -f T/event/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast[:,0]
         histoprint -s Event.root -f htime
 
   black:
