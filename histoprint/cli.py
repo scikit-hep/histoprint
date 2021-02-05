@@ -275,7 +275,11 @@ def _histoprint_root(infile, **kwargs):
                 )
                 exit(1)
         try:
-            d = branch.array()
+            try:  # Does the object have values?
+                d = branch.array()
+            except (AttributeError, TypeError):
+                # If not, turn into value error
+                raise ValueError
             try:  # Uproot >= 4.0 and Awkward >= 1.0 ?
                 d = ak.to_numpy(d)
             except AttributeError:
