@@ -40,7 +40,9 @@ def test_hist():
         summary=True,
     )
     print_hist(
-        (histAll[0][:3], histAll[1]), title="No composition", labels=["A", "B", "C"],
+        (histAll[0][:3], histAll[1]),
+        title="No composition",
+        labels=["A", "B", "C"],
     )
 
 
