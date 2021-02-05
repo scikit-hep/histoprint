@@ -129,7 +129,10 @@ of tabulated data. It can read in files or take data directly from STDIN::
                                       When plotting from ROOT files, at least one
                                       field must be specified. This can either be
                                       the path to a single TH1, or one or more
-                                      paths to TTree branches.
+                                      paths to TTree branches. Also supports
+                                      slicing of array-like branches, e.g. use
+                                      'tree/branch[:,2]' to histogram the 3rd
+                                      elements of a vector-like branch.
 
       -c, --columns INTEGER           Total width of the displayed historgram in
                                       characters. Defaults to width of the
@@ -141,7 +144,6 @@ of tabulated data. It can read in files or take data directly from STDIN::
 
       --version                       Show the version and exit.
       --help                          Show this message and exit.
-
 
     $ histoprint -t "Title" -s -b "0.5 1.5 2.5 3.5 4.5" -l A -l B --fg-colors "0" --bg-colors "0" --symbols "|=" - <<EOF
     1 2

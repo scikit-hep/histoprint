@@ -67,21 +67,25 @@ import histoprint.formatter as formatter
     "starting at 0. For CSV files, the fields must be the names of the columns "
     "as specified in the first line of the file. When plotting from ROOT files, "
     "at least one field must be specified. This can either be the path to a "
-    "single TH1, or one or more paths to TTree branches.",
+    "single TH1, or one or more paths to TTree branches. Also supports slicing "
+    "of array-like branches, e.g. use 'tree/branch[:,2]' to histogram the 3rd "
+    "elements of a vector-like branch.",
 )
 @click.option(
     "-c",
     "--columns",
     type=int,
     default=None,
-    help="Total width of the displayed historgram in characters. Defaults to width of the terminal.",
+    help="Total width of the displayed historgram in characters. Defaults to "
+    "width of the terminal.",
 )
 @click.option(
     "-r",
     "--lines",
     type=int,
     default=None,
-    help="Approximate total height of the displayed historgram in characters. Calculated from number of columns by default.",
+    help="Approximate total height of the displayed historgram in characters. "
+    "Calculated from number of columns by default.",
 )
 @click.version_option()
 def histoprint(infile, **kwargs):
