@@ -30,7 +30,7 @@ jobs:
         python -m pip install -e .[test]
     - name: Install optional dependencies for tests
       run: |
-        pip install boost-histogram uproot pandas || true
+        pip install boost-histogram uproot awkward pandas || true
     - name: Run tests
       run: |
         python -m pytest -s tests/test.py

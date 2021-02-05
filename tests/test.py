@@ -40,9 +40,7 @@ def test_hist():
         summary=True,
     )
     print_hist(
-        (histAll[0][:3], histAll[1]),
-        title="No composition",
-        labels=["A", "B", "C"],
+        (histAll[0][:3], histAll[1]), title="No composition", labels=["A", "B", "C"],
     )
 
 
@@ -60,33 +58,22 @@ def test_boost():
 
 
 def test_uproot():
-    """Test uproot hsitograms if t is available."""
+    """Test uproot hsitograms if it is available."""
 
     try:
         import uproot
+        import awkward
     except:
         return
 
-    import uproot_methods.classes.TH1
+    with uproot.open("tests/data/histograms.root") as F:
+        hist = F["one"]
 
-    class Cls(object):
+    try:
+        # Works with uproot 3
+        hist.show()
+    except:
         pass
-
-    class MyTH1(uproot_methods.classes.TH1.Methods, list):
-        def __init__(self, low, high, values, title=""):
-            self._fXaxis = Cls()
-            self._fXaxis._fNbins = len(values)
-            self._fXaxis._fXmin = low
-            self._fXaxis._fXmax = high
-            self.append(0.0)  # underflow
-            for x in values:
-                self.append(float(x))
-            self.append(0.0)  # overflow
-            self._fTitle = title
-            self._classname = "TH1F"
-
-    hist = MyTH1(-5, 5, [3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2])
-    hist.show()
     print_hist(hist, title="uproot TH1")
 
 
