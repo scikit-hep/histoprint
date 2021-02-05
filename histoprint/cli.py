@@ -254,13 +254,21 @@ def _histoprint_root(infile, **kwargs):
     if len(fields) == 1:
         # Possible a single histogram
         try:
-            hist = F[fields[0]].numpy()
-        except (AttributeError, KeyError):
-            pass
+            hist = F[fields[0]]
+        except KeyError:
+            pass  # Deal with key error further down
         else:
-            kwargs.pop("bins", None)  # Get rid of useless parameter
-            print_hist(hist, **kwargs)
-            return
+            try:
+                hist = hist.numpy()  # Uproot 3
+            except AttributeError:
+                try:
+                    hist = F[fields[0]].to_numpy()  # Uproot 4
+                except AttributeError:
+                    hist = None
+            if hist is not None:
+                kwargs.pop("bins", None)  # Get rid of useless parameter
+                print_hist(hist, **kwargs)
+                return
 
     data = []
     for field in fields:
@@ -286,10 +294,13 @@ def _histoprint_root(infile, **kwargs):
                 pass
             d = np.array(d.flatten())
         except ValueError:
-            click.echo(
-                "Could not interpret root object '%s'. Possible child branches: %s"
-                % (key, branch.keys())
-            )
+            try:
+                click.echo(
+                    "Could not interpret root object '%s'. Possible child branches: %s"
+                    % (key, branch.keys())
+                )
+            except AttributeError:
+                click.echo("Could not interpret root object '%s'." % (key))
             exit(1)
         data.append(d)
 
