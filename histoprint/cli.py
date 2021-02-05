@@ -129,7 +129,7 @@ def histoprint(infile, **kwargs):
         _histoprint_root(infile, **kwargs)
         exit(0)
     except ImportError:
-        click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
+        pass
 
     click.echo("Could not interpret file format.", err=True)
     exit(1)
@@ -223,7 +223,18 @@ def _histoprint_csv(infile, **kwargs):
 def _histoprint_root(infile, **kwargs):
     """Interpret file as as ROOT file."""
 
-    import uproot as up
+    # Import uproot
+    try:
+        import uproot as up
+    except ImportError:
+        click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
+        raise
+    # Import awkward
+    try:
+        import awkward as ak
+    except ImportError:
+        click.echo("Cannot try ROOT file format. Awkward module not found.", err=True)
+        raise
 
     # Open root file
     F = up.open(infile)
@@ -264,7 +275,12 @@ def _histoprint_root(infile, **kwargs):
                 )
                 exit(1)
         try:
-            d = np.array(branch.array().flatten())
+            d = branch.array()
+            try:  # Uproot >= 4.0 and Awkward >= 1.0 ?
+                d = ak.to_numpy(d)
+            except AttributeError:
+                pass
+            d = np.array(d.flatten())
         except ValueError:
             click.echo(
                 "Could not interpret root object '%s'. Possible child branches: %s"
