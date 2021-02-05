@@ -270,13 +270,12 @@ def _histoprint_root(infile, **kwargs):
     data = []
     for field in fields:
         branch = F
-        index = "[...]"
+        index = ""
         for key in field.split("/"):
             # Get possible array indices
             if "[" in key and key[-1] == "]":
                 i = key.find("[")
                 index = key[i:]
-                print(index)
                 key = key[:i]
             try:
                 branch = branch[key]
