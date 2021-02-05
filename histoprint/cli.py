@@ -129,7 +129,7 @@ def histoprint(infile, **kwargs):
         _histoprint_root(infile, **kwargs)
         exit(0)
     except ImportError:
-        click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
+        pass
 
     click.echo("Could not interpret file format.", err=True)
     exit(1)
@@ -223,7 +223,18 @@ def _histoprint_csv(infile, **kwargs):
 def _histoprint_root(infile, **kwargs):
     """Interpret file as as ROOT file."""
 
-    import uproot as up
+    # Import uproot
+    try:
+        import uproot as up
+    except ImportError:
+        click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
+        raise
+    # Import awkward
+    try:
+        import awkward as ak
+    except ImportError:
+        click.echo("Cannot try ROOT file format. Awkward module not found.", err=True)
+        raise
 
     # Open root file
     F = up.open(infile)
@@ -243,13 +254,21 @@ def _histoprint_root(infile, **kwargs):
     if len(fields) == 1:
         # Possible a single histogram
         try:
-            hist = F[fields[0]].numpy()
-        except (AttributeError, KeyError):
-            pass
+            hist = F[fields[0]]
+        except KeyError:
+            pass  # Deal with key error further down
         else:
-            kwargs.pop("bins", None)  # Get rid of useless parameter
-            print_hist(hist, **kwargs)
-            return
+            try:
+                hist = hist.numpy()  # Uproot 3
+            except AttributeError:
+                try:
+                    hist = F[fields[0]].to_numpy()  # Uproot 4
+                except AttributeError:
+                    hist = None
+            if hist is not None:
+                kwargs.pop("bins", None)  # Get rid of useless parameter
+                print_hist(hist, **kwargs)
+                return
 
     data = []
     for field in fields:
@@ -264,12 +283,24 @@ def _histoprint_root(infile, **kwargs):
                 )
                 exit(1)
         try:
-            d = np.array(branch.array().flatten())
+            try:  # Does the object have values?
+                d = branch.array()
+            except (AttributeError, TypeError):
+                # If not, turn into value error
+                raise ValueError
+            try:  # Uproot >= 4.0 and Awkward >= 1.0 ?
+                d = ak.to_numpy(ak.flatten(d))
+            except AttributeError:
+                pass
+            d = np.array(d.flatten())
         except ValueError:
-            click.echo(
-                "Could not interpret root object '%s'. Possible child branches: %s"
-                % (key, branch.keys())
-            )
+            try:
+                click.echo(
+                    "Could not interpret root object '%s'. Possible child branches: %s"
+                    % (key, branch.keys())
+                )
+            except AttributeError:
+                click.echo("Could not interpret root object '%s'." % (key))
             exit(1)
         data.append(d)
 
