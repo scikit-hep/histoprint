@@ -67,21 +67,25 @@ import histoprint.formatter as formatter
     "starting at 0. For CSV files, the fields must be the names of the columns "
     "as specified in the first line of the file. When plotting from ROOT files, "
     "at least one field must be specified. This can either be the path to a "
-    "single TH1, or one or more paths to TTree branches.",
+    "single TH1, or one or more paths to TTree branches. Also supports slicing "
+    "of array-like branches, e.g. use 'tree/branch[:,2]' to histogram the 3rd "
+    "elements of a vector-like branch.",
 )
 @click.option(
     "-c",
     "--columns",
     type=int,
     default=None,
-    help="Total width of the displayed historgram in characters. Defaults to width of the terminal.",
+    help="Total width of the displayed historgram in characters. Defaults to "
+    "width of the terminal.",
 )
 @click.option(
     "-r",
     "--lines",
     type=int,
     default=None,
-    help="Approximate total height of the displayed historgram in characters. Calculated from number of columns by default.",
+    help="Approximate total height of the displayed historgram in characters. "
+    "Calculated from number of columns by default.",
 )
 @click.version_option()
 def histoprint(infile, **kwargs):
@@ -242,7 +246,7 @@ def _histoprint_root(infile, **kwargs):
     # Interpret field names
     fields = list(kwargs.pop("fields", []))
     if len(fields) == 0:
-        click.echo("Must specify at least on field for ROOT files.", err=True)
+        click.echo("Must specify at least one field for ROOT files.", err=True)
         click.echo(F.keys())
         exit(1)
 
@@ -252,20 +256,17 @@ def _histoprint_root(infile, **kwargs):
 
     # Read the data
     if len(fields) == 1:
-        # Possible a single histogram
+        # Possibly a single histogram
         try:
             hist = F[fields[0]]
         except KeyError:
             pass  # Deal with key error further down
         else:
             try:
-                hist = hist.numpy()  # Uproot 3
+                hist = F[fields[0]].to_numpy()
             except AttributeError:
-                try:
-                    hist = F[fields[0]].to_numpy()  # Uproot 4
-                except AttributeError:
-                    hist = None
-            if hist is not None:
+                pass
+            else:
                 kwargs.pop("bins", None)  # Get rid of useless parameter
                 print_hist(hist, **kwargs)
                 return
@@ -273,7 +274,13 @@ def _histoprint_root(infile, **kwargs):
     data = []
     for field in fields:
         branch = F
+        index = ""
         for key in field.split("/"):
+            # Get possible array indices
+            if "[" in key and key[-1] == "]":
+                i = key.find("[")
+                index = key[i:]
+                key = key[:i]
             try:
                 branch = branch[key]
             except KeyError:
@@ -282,18 +289,9 @@ def _histoprint_root(infile, **kwargs):
                     % (key, branch.keys())
                 )
                 exit(1)
-        try:
-            try:  # Does the object have values?
-                d = branch.array()
-            except (AttributeError, TypeError):
-                # If not, turn into value error
-                raise ValueError
-            try:  # Uproot >= 4.0 and Awkward >= 1.0 ?
-                d = ak.to_numpy(ak.flatten(d))
-            except AttributeError:
-                pass
-            d = np.array(d.flatten())
-        except ValueError:
+        try:  # Does the object have values?
+            d = branch.array()
+        except (AttributeError, TypeError):
             try:
                 click.echo(
                     "Could not interpret root object '%s'. Possible child branches: %s"
@@ -302,6 +300,21 @@ def _histoprint_root(infile, **kwargs):
             except AttributeError:
                 click.echo("Could not interpret root object '%s'." % (key))
             exit(1)
+
+        # Apply index
+        try:
+            d = eval("d" + index)
+        except:
+            raise
+
+        # Flatten if necessary
+        try:
+            d = ak.flatten(d)
+        except ValueError:
+            pass
+
+        # Turn into flat numpy array
+        d = ak.to_numpy(d)
         data.append(d)
 
     # Interpret bins

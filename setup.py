@@ -18,7 +18,7 @@ if __name__ == "__main__":
     with open("README.rst", mode="r", encoding="utf-8") as f:
         long_description = f.read()
 
-extras = {"test": ["pytest"]}
+extras = {"test": ["pytest"], "root": ["uproot>=4", "awkward>=1"]}
 
 setup(
     name="histoprint",
