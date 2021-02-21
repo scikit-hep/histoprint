@@ -1,18 +1,16 @@
-==========
-histoprint
-==========
+=====================================================================
+histoprint - pretty print NumPy (and other) histograms to the console
+=====================================================================
 
-|Scikit-HEP|
-
-Pretty print Numpy (and other) histograms to the console
+|Scikit-HEP| |PyPI| |Conda-forge|
 
 
 How does it work?
 -----------------
 
-Histoprint uses a mix of terminal color codes and Unicode trickery (i.e.
+``Histoprint`` uses a mix of terminal color codes and Unicode trickery (i.e.
 combining characters) to plot overlaying histograms. Some terminals are not
-able to display Unicode combining characters correctly. Histopront can still be
+able to display Unicode combining characters correctly. ``Histoprint`` can still be
 used in those terminals, but the character set needs to be constrained to the
 non-combining ones (see below).
 
@@ -92,7 +90,7 @@ The last example does not use terminal colors, so it can be copied as text::
 Command line interface
 ----------------------
 
-Histoprint also comes with a simple command line interface to create histograms
+``Histoprint`` also comes with a simple command-line interface to create histograms
 of tabulated data. It can read in files or take data directly from STDIN::
 
     $ histoprint --help
@@ -180,11 +178,12 @@ of tabulated data. It can read in files or take data directly from STDIN::
 Support for other histogram types
 ---------------------------------
 
-Histoprint can directly plot other (more fancy) types of histograms if they
-offer a way of being converted to the Numpy format. Currently this means they
+``Histoprint`` can directly plot other (more fancy) types of histograms if they
+offer a way of being converted to the NumPy format. Currently this means they
 have to expose a ``numpy()`` or ``to_numpy()`` method. Both the ``TH1``
-histograms of uproot, as well as the histograms of boost-histogram are
-supported like this::
+histograms of `uproot4 <https://github.com/scikit-hep/uproot4>`__,
+as well as the histograms of `boost-histogram <https://github.com/scikit-hep/boost-histogram>`__,
+are supported like this::
 
     import boost_histogram as bh
     hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
@@ -208,8 +207,6 @@ How to get it?
 
     $ conda install -c conda-forge histoprint
 
-.. |Scikit-HEP| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
-   :target: https://scikit-hep.org/
 
 Disabling Unicode combining characters
 --------------------------------------
@@ -222,3 +219,13 @@ To disable the use of combining characters, simply do not use them when calling
 
 The combining characters are ``/`` and ``\``. Note that they are used in the
 default set of characters for the 4th and 5th histogram if they are present.
+
+
+.. |Scikit-HEP| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
+   :target: https://scikit-hep.org/
+
+.. |PyPI| image:: https://img.shields.io/pypi/v/histoprint.svg
+   :target: https://pypi.python.org/pypi/histoprint
+
+.. |Conda-forge| image:: https://img.shields.io/conda/vn/conda-forge/histoprint.svg
+   :target: https://anaconda.org/conda-forge/histoprint
