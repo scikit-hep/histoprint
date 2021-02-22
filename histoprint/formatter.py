@@ -253,6 +253,9 @@ class BinFormatter:
         else:
             scale = self.scale
 
+        if scale == 0:
+            scale = 1.
+
         # Calculate bin heights in characters
         heights = [int(c // scale) for c in counts]
 
@@ -399,6 +402,8 @@ class HistFormatter:
             # so all bins will scale to <= 1 lines
             # and be rendered with one line
             line_scale = np.max(edges[1:] - edges[:-1])
+        if line_scale == 0.:
+            line_scale = 1.
         self.bin_lines = ((edges[1:] - edges[:-1]) // line_scale).astype(int)
         self.bin_lines = np.where(self.bin_lines, self.bin_lines, 1)
         self.bin_formatter = BinFormatter(**kwargs)
@@ -513,15 +518,21 @@ class HistFormatter:
         # Third line: Average
         summary += " " * pad + "Avg:"
         for c, w in zip(counts, label_widths):
-            average = np.average(bin_values, weights=c)
+            try:
+                average = np.average(bin_values, weights=c)
+            except ZeroDivisionError:
+                average = np.nan
             summary += f" {average: .2e}" + " " * (w - 10)
         summary += "\n"
 
         # Fourth line: std
         summary += " " * pad + "Std:"
         for c, w in zip(counts, label_widths):
-            average = np.average(bin_values, weights=c)
-            std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
+            try:
+                average = np.average(bin_values, weights=c)
+                std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
+            except ZeroDivisionError:
+                std = np.nan
             summary += f" {std: .2e}" + " " * (w - 10)
         summary += "\n"
 

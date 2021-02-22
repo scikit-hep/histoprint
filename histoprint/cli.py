@@ -146,8 +146,12 @@ def _bin_edges(kwargs, data):
         minval = np.inf
         maxval = -np.inf
         for d in data:
-            minval = min(minval, np.nanmin(d))
-            maxval = max(maxval, np.nanmax(d))
+            try:
+                minval = min(minval, np.nanmin(d))
+                maxval = max(maxval, np.nanmax(d))
+            except ValueError:
+                # Empty data?
+                pass
         bins = np.linspace(minval, maxval, bins + 1)
     return bins
 
