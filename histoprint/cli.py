@@ -75,11 +75,23 @@ import histoprint.formatter as formatter
     "elements of a vector-like branch.",
 )
 @click.option(
+    "-C",
+    "--cut",
+    "cut",
+    type=str,
+    help="Filter the data to be plotted by a cut condition. For ROOT files, "
+    "variables must be referenced by their branch name within the TTree, e.g. "
+    "'momentum > 100.' rather than 'tree/object/momentum > 100.'. For text "
+    "files, the fields are referred to as 'data[i]', where 'i' is the field "
+    "number. The variables used in the cut do not have to be part of the "
+    "plotted fields.",
+)
+@click.option(
     "-c",
     "--columns",
     type=int,
     default=None,
-    help="Total width of the displayed historgram in characters. Defaults to "
+    help="Total width of the displayed histogram in characters. Defaults to "
     "width of the terminal.",
 )
 @click.option(
@@ -87,7 +99,7 @@ import histoprint.formatter as formatter
     "--lines",
     type=int,
     default=None,
-    help="Approximate total height of the displayed historgram in characters. "
+    help="Approximate total height of the displayed histogram in characters. "
     "Calculated from number of columns by default.",
 )
 @click.version_option()
@@ -162,6 +174,9 @@ def _histoprint_txt(infile, **kwargs):
     # Read the data
     data = np.loadtxt(infile, ndmin=2)
     data = data.T
+    cut = kwargs.pop("cut", "")
+    if cut is not None and len(cut) > 0:
+        data = data[:, eval(cut)]
 
     # Interpret field numbers
     fields = kwargs.pop("fields", [])
@@ -196,6 +211,9 @@ def _histoprint_csv(infile, **kwargs):
 
     # Read the data
     data = pd.read_csv(infile)
+    cut = kwargs.pop("cut", "")
+    if cut is not None and len(cut) > 0:
+        data = data[data.eval(cut)]
 
     # Interpret field numbers/names
     fields = list(kwargs.pop("fields", []))
@@ -254,10 +272,13 @@ def _histoprint_root(infile, **kwargs):
     # Get default columns labels
     if kwargs.get("labels", ("",)) == ("",):
         kwargs["labels"] = [field.split("/")[-1] for field in fields]
+    labels = kwargs.pop("labels")
 
-    # Read the data
+    # Get possible cut expression
+    cut = kwargs.pop("cut", "")
+
+    # Possibly a single histogram
     if len(fields) == 1:
-        # Possibly a single histogram
         try:
             hist = F[fields[0]]
         except KeyError:
@@ -276,7 +297,7 @@ def _histoprint_root(infile, **kwargs):
     # Find TTrees
     trees = []
     tree_fields = []
-    for field in fields:
+    for field, label in zip(fields, labels):
         branch = F
         splitfield = field.split("/")
         for i, key in enumerate(splitfield):
@@ -295,39 +316,61 @@ def _histoprint_root(infile, **kwargs):
                 pass
             else:
                 # Found it
-                name = "/".join(splitfield[i + 1 :])
+                path = "/".join(splitfield[i + 1 :])
                 if branch in trees:
-                    tree_fields[trees.index(branch)].append(name)
+                    tree_fields[trees.index(branch)].append(
+                        {"label": label, "path": path}
+                    )
                 else:
                     trees.append(branch)
-                    tree_fields.append([name])
+                    tree_fields.append([{"label": label, "path": path}])
 
                 break
 
+    # Reassign labels in correct order
+    labels = []
     # Get and flatten the data
     for tree, fields in zip(trees, tree_fields):
-        try:
-            arrays = tree.arrays(fields)
-        except up.KeyInFileError as e:
-            click.echo(e)
-            click.echo("Possible keys: %s" % tree.keys())
-            exit(1)
-        except ValueError as e:
-            click.echo(e)
-            exit(1)
-
-        for field in ak.fields(arrays):
-            d = arrays[field]
-
-            # Flatten if necessary
+        aliases = {}
+        d = []
+        for field in fields:
+            labels.append(field["label"])
+            split = field["path"].split("[")
+            path = split[0]
+            if len(split) > 1:
+                slic = "[" + "[".join(split[1:])
+            else:
+                slic = ""
+            aliases[field["label"]] = path
+            # Get the branches
             try:
-                d = ak.flatten(d)
+                d.append(eval("tree[path].array()" + slic))
+            except up.KeyInFileError as e:
+                click.echo(e)
+                click.echo("Possible keys: %s" % tree.keys())
+                exit(1)
+
+        # Cut on values
+        if cut is not None:
+            index = tree.arrays("cut", aliases={"cut": cut}).cut
+            print(index)
+            for i in range(len(d)):
+                d[i] = d[i][index]
+
+        # Flatten if necessary
+        for i in range(len(d)):
+            try:
+                d[i] = ak.flatten(d[i])
             except ValueError:
                 pass
 
             # Turn into flat numpy array
-            d = ak.to_numpy(d)
-            data.append(d)
+            d[i] = ak.to_numpy(d[i])
+
+        data.extend(d)
+
+    # Assign new label order
+    kwargs["labels"] = labels
 
     # Interpret bins
     bins = _bin_edges(kwargs, data)

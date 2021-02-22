@@ -132,12 +132,22 @@ of tabulated data. It can read in files or take data directly from STDIN::
                                       'tree/branch[:,2]' to histogram the 3rd
                                       elements of a vector-like branch.
 
-      -c, --columns INTEGER           Total width of the displayed historgram in
+      -C, --cut TEXT                  Filter the data to be plotted by a cut
+                                      condition. For ROOT files, variables must be
+                                      referenced by their branch name within the
+                                      TTree, e.g. 'momentum > 100.' rather than
+                                      'tree/object/momentum > 100.'. For text
+                                      files, the fields are referred to as
+                                      'data[i]', where 'i' is the field number.
+                                      The variables used in the cut do not have to
+                                      be part of the plotted fields.
+
+      -c, --columns INTEGER           Total width of the displayed histogram in
                                       characters. Defaults to width of the
                                       terminal.
 
       -r, --lines INTEGER             Approximate total height of the displayed
-                                      historgram in characters. Calculated from
+                                      histogram in characters. Calculated from
                                       number of columns by default.
 
       --version                       Show the version and exit.
