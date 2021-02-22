@@ -269,15 +269,13 @@ def _histoprint_root(infile, **kwargs):
                 return
 
     data = []
+    # Find TTrees
+    trees = []
+    tree_fields = []
     for field in fields:
         branch = F
-        index = ""
-        for key in field.split("/"):
-            # Get possible array indices
-            if "[" in key and key[-1] == "]":
-                i = key.find("[")
-                index = key[i:]
-                key = key[:i]
+        splitfield = field.split("/")
+        for i, key in enumerate(splitfield):
             try:
                 branch = branch[key]
             except KeyError:
@@ -286,33 +284,46 @@ def _histoprint_root(infile, **kwargs):
                     % (key, branch.keys())
                 )
                 exit(1)
-        try:  # Does the object have values?
-            d = branch.array()
-        except (AttributeError, TypeError):
+            # Has `arrays` method?
             try:
-                click.echo(
-                    "Could not interpret root object '%s'. Possible child branches: %s"
-                    % (key, branch.keys())
-                )
+                branch.arrays
             except AttributeError:
-                click.echo("Could not interpret root object '%s'." % (key))
+                pass
+            else:
+                # Found it
+                name = "/".join(splitfield[i + 1 :])
+                if branch in trees:
+                    tree_fields[trees.index(branch)].append(name)
+                else:
+                    trees.append(branch)
+                    tree_fields.append([name])
+
+                break
+
+    # Get and flatten the data
+    for tree, fields in zip(trees, tree_fields):
+        try:
+            arrays = tree.arrays(fields)
+        except up.KeyInFileError as e:
+            click.echo(e)
+            click.echo("Possible keys: %s" % tree.keys())
+            exit(1)
+        except ValueError as e:
+            click.echo(e)
             exit(1)
 
-        # Apply index
-        try:
-            d = eval("d" + index)
-        except Exception:
-            raise
+        for field in ak.fields(arrays):
+            d = arrays[field]
 
-        # Flatten if necessary
-        try:
-            d = ak.flatten(d)
-        except ValueError:
-            pass
+            # Flatten if necessary
+            try:
+                d = ak.flatten(d)
+            except ValueError:
+                pass
 
-        # Turn into flat numpy array
-        d = ak.to_numpy(d)
-        data.append(d)
+            # Turn into flat numpy array
+            d = ak.to_numpy(d)
+            data.append(d)
 
     # Interpret bins
     bins = _bin_edges(kwargs, data)
