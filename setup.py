@@ -13,10 +13,10 @@ Pretty print numpy histograms to the console.
 
 """
 
-if __name__ == "__main__":
-    # Read README
-    with open("README.rst", mode="r", encoding="utf-8") as f:
-        long_description = f.read()
+
+# Read README
+with open("README.rst", mode="r", encoding="utf-8") as f:
+    long_description = f.read()
 
 extras = {"test": ["pytest"], "root": ["uproot>=4", "awkward>=1"]}
 
@@ -31,22 +31,13 @@ setup(
     packages=["histoprint"],
     install_requires=["numpy>=1.0.0", "click>=7.0.0"],
     extras_require=extras,
-    tests_require=extras["test"],
     python_requires=">=2.7",
     classifiers=[
-        # How mature is this project? Common values are
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
         "Development Status :: 5 - Production/Stable",
-        # Indicate who your project is intended for
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",
-        # Pick your license as you wish (should match "license" above)
         "License :: OSI Approved :: MIT License",
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
