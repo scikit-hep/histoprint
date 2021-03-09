@@ -528,7 +528,7 @@ class HistFormatter(object):
         return summary
 
 
-def get_plottable_protocol_bins(axis: "PlottableAxis") -> np.ndarray:
+def get_plottable_protocol_bins(axis):
     """Get histogram bin edges from PlottableAxis.
 
     Borrowed from ``mplhep.utils``.
