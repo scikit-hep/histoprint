@@ -359,7 +359,7 @@ class HistFormatter(object):
         title="",
         labels=[""],
         summary=False,
-        **kwargs
+        **kwargs,
     ):
         self.title = title
         self.edges = edges

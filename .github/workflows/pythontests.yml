@@ -62,4 +62,4 @@ jobs:
         pip install black
     - name: Lint with Black
       run: |
-        black -t py35 --check .
+        black --check .
