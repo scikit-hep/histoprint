@@ -528,7 +528,7 @@ class HistFormatter(object):
         return summary
 
 
-def get_plottable_protocol_bins(axis):
+def get_plottable_protocol_bin_edges(axis):
     """Get histogram bin edges from PlottableAxis.
 
     Borrowed from ``mplhep.utils``.
@@ -551,22 +551,22 @@ def get_count_edges(hist):
     # Try the PlottableProtocol
     try:
         count = hist.values()
-        edges = get_plottable_protocol_bins(hist.axes[0])
+        edges = get_plottable_protocol_bin_edges(hist.axes[0])
         print(edges)
         # Each bin comes with both upper and lower edge
         # Merge
         hist = count, edges
-    except:
+    except Exception:
         pass
 
     # Try generic numpy conversion methods
     try:
         hist = hist.to_numpy()
-    except:
+    except Exception:
         pass
     try:
         hist = hist.numpy()
-    except:
+    except Exception:
         pass
 
     # Try the Numpy interface
