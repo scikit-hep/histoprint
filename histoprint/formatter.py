@@ -552,7 +552,6 @@ def get_count_edges(hist):
     try:
         count = hist.values()
         edges = get_plottable_protocol_bin_edges(hist.axes[0])
-        print(edges)
         # Each bin comes with both upper and lower edge
         # Merge
         hist = count, edges
