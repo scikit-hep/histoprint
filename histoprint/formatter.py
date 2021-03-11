@@ -29,7 +29,7 @@ class Hixel(object):
     def add(self, char=" ", fg="0", bg="0"):
         """Add another element on top."""
 
-        allowed = " =|\/"
+        allowed = r" =|\/"
         if char not in allowed:
             raise ValueError("Symbol not one of the allowed: '%s'" % (allowed,))
 
@@ -75,7 +75,7 @@ class Hixel(object):
             # Replace BG colour with opposite brightness,
             # so it shows when the text is selected in a terminal.
             ret += self.ansi_color_string(self.bg_color, self.bg_color.swapcase())
-            ret += u"\u2588"
+            ret += "\u2588"
         else:
             ret += self.ansi_color_string(self.fg_color, self.bg_color)
             ret += self.substitute_character(self.character, self.compose)
@@ -99,13 +99,13 @@ class Hixel(object):
         """
 
         subs = {
-            "|": u"\u2502",
-            "=": u"\u2550",
-            "#": u"\u256A",
-            "\\": u"\u20e5",
-            "/": u"\u20eb",
-            "X": u"\u20e5\u20eb",
-            None: u"",
+            "|": "\u2502",
+            "=": "\u2550",
+            "#": "\u256A",
+            "\\": "\u20e5",
+            "/": "\u20eb",
+            "X": "\u20e5\u20eb",
+            None: "",
         }
 
         ret = subs.get(char, char)
@@ -113,7 +113,7 @@ class Hixel(object):
         # This looks ugly if some Hixels of a histogram are covered by another and some are not.
         # Unless explicitly asked for no compositio, if no composition is added,
         # use empty composition character to make them all display the same.
-        ret += subs.get(compose, u"\u034f")
+        ret += subs.get(compose, "\u034f")
 
         return ret
 
@@ -359,7 +359,7 @@ class HistFormatter(object):
         title="",
         labels=[""],
         summary=False,
-        **kwargs
+        **kwargs,
     ):
         self.title = title
         self.edges = edges
@@ -448,7 +448,7 @@ class HistFormatter(object):
         hist_string += self.bin_formatter.tick(top[0])
         longest_count = tot_c[np.argmax(c)]
         if np.issubdtype(longest_count.dtype, np.integer):
-            hist_string += (u"{: %dd} \u2577\n" % (hist_width - 2,)).format(
+            hist_string += ("{: %dd} \u2577\n" % (hist_width - 2,)).format(
                 longest_count
             )
         else:
@@ -457,7 +457,7 @@ class HistFormatter(object):
             # The tick value
             hist_string += self.bin_formatter.tick_format % (longest_count,)
             # The tick
-            hist_string += u"\u2577\n"
+            hist_string += "\u2577\n"
 
         # Write the bins
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
@@ -528,19 +528,44 @@ class HistFormatter(object):
         return summary
 
 
+def get_plottable_protocol_bin_edges(axis):
+    """Get histogram bin edges from PlottableAxis.
+
+    Borrowed from ``mplhep.utils``.
+
+    """
+
+    out = np.empty(len(axis) + 1)
+    assert isinstance(
+        axis[0], tuple
+    ), f"Currently only support non-discrete axes {axis}"
+    # TODO: Support discreete axes
+    out[0] = axis[0][0]
+    out[1:] = [axis[i][1] for i in range(len(axis))]  # type: ignore
+    return out
+
+
 def get_count_edges(hist):
     """Get bin contents and edges from a compatible histogram."""
 
-    # Try the boost-histogram interface
+    # Try the PlottableProtocol
     try:
-        hist = hist.to_numpy()
-    except:
+        count = hist.values()
+        edges = get_plottable_protocol_bin_edges(hist.axes[0])
+        # Each bin comes with both upper and lower edge
+        # Merge
+        hist = count, edges
+    except Exception:
         pass
 
-    # Try the uproot interface
+    # Try generic numpy conversion methods
+    try:
+        hist = hist.to_numpy()
+    except Exception:
+        pass
     try:
         hist = hist.numpy()
-    except:
+    except Exception:
         pass
 
     # Try the Numpy interface
