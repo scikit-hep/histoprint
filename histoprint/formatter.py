@@ -1,11 +1,11 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
-from __future__ import division
-from itertools import cycle
 
 import sys
-import numpy as np
+from itertools import cycle
+
 import click
+import numpy as np
 
 DEFAULT_SYMBOLS = " |=/\\"
 COMPOSING_SYMBOLS = "/\\"
@@ -15,7 +15,7 @@ DEFAULT_BG_COLORS = "K0000"
 __all__ = ["print_hist", "text_hist", "HistFormatter"]
 
 
-class Hixel(object):
+class Hixel:
     """The smallest unit of a histogram plot."""
 
     def __init__(self, char=" ", fg="0", bg="0", use_color=True, compose=" "):
@@ -31,7 +31,7 @@ class Hixel(object):
 
         allowed = r" =|\/"
         if char not in allowed:
-            raise ValueError("Symbol not one of the allowed: '%s'" % (allowed,))
+            raise ValueError(f"Symbol not one of the allowed: '{allowed}'")
 
         if fg == self.fg_color:
             # Combine characters if possible
@@ -148,7 +148,7 @@ class Hixel(object):
         return ret
 
 
-class BinFormatter(object):
+class BinFormatter:
     """Class that turns bin contents into text.
 
     Parameters
@@ -320,7 +320,7 @@ class BinFormatter(object):
         return " " * self.tick_format_width + self.no_tick_mark
 
 
-class HistFormatter(object):
+class HistFormatter:
     """Class that handles the formating of histograms.
 
     Parameters
@@ -488,7 +488,7 @@ class HistFormatter(object):
             cycle(self.bin_formatter.bg_colors),
         ):
             # Pad label to make room for numbers below
-            l = "%-9s" % (l,)
+            l = f"{l:<9}"
             label = " "
             label += Hixel(
                 s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose
@@ -507,14 +507,14 @@ class HistFormatter(object):
         summary += " " * pad + "Tot:"
         for c, w in zip(counts, label_widths):
             tot = np.sum(c)
-            summary += " % .2e" % (tot,) + " " * (w - 10)
+            summary += f" {tot: .2e}" + " " * (w - 10)
         summary += "\n"
 
         # Third line: Average
         summary += " " * pad + "Avg:"
         for c, w in zip(counts, label_widths):
             average = np.average(bin_values, weights=c)
-            summary += " % .2e" % (average,) + " " * (w - 10)
+            summary += f" {average: .2e}" + " " * (w - 10)
         summary += "\n"
 
         # Fourth line: std
@@ -522,7 +522,7 @@ class HistFormatter(object):
         for c, w in zip(counts, label_widths):
             average = np.average(bin_values, weights=c)
             std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
-            summary += " % .2e" % (std,) + " " * (w - 10)
+            summary += f" {std: .2e}" + " " * (w - 10)
         summary += "\n"
 
         return summary

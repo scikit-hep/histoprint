@@ -1,4 +1,5 @@
 import numpy as np
+
 from histoprint import *
 
 
@@ -63,8 +64,8 @@ def test_uproot():
     """Test uproot hsitograms if it is available."""
 
     try:
-        import uproot
         import awkward
+        import uproot
     except:
         return
 
