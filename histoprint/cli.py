@@ -305,7 +305,7 @@ def _histoprint_root(infile, **kwargs):
         # Apply index
         try:
             d = eval("d" + index)
-        except:
+        except Exception:
             raise
 
         # Flatten if necessary

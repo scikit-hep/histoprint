@@ -52,7 +52,7 @@ def test_boost():
 
     try:
         import boost_histogram as bh
-    except:
+    except ModuleNotFoundError:
         return
 
     hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
@@ -66,7 +66,7 @@ def test_uproot():
     try:
         import awkward
         import uproot
-    except:
+    except ModuleNotFoundError:
         return
 
     with uproot.open("tests/data/histograms.root") as F:
@@ -75,7 +75,7 @@ def test_uproot():
     try:
         # Works with uproot 3
         hist.show()
-    except:
+    except Exception:
         pass
     print_hist(hist, title="uproot TH1")
 

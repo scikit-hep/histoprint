@@ -1,7 +1,6 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
 
-import sys
 from itertools import cycle
 
 import click
@@ -357,7 +356,7 @@ class HistFormatter:
         columns=None,
         scale_bin_width=True,
         title="",
-        labels=[""],
+        labels=("",),
         summary=False,
         **kwargs,
     ):
@@ -480,7 +479,7 @@ class HistFormatter:
 
         # First line: symbol, label
         summary += "     "
-        for c, l, s, fg, bg in zip(
+        for _, l, s, fg, bg in zip(
             counts,
             cycle(self.labels),
             cycle(self.bin_formatter.symbols),
@@ -577,7 +576,7 @@ def get_count_edges(hist):
     return count, edges
 
 
-def print_hist(hist, file=click.get_text_stream("stdout"), **kwargs):
+def print_hist(hist, file=click.get_text_stream("stdout"), **kwargs):  # noqa: B008
     """Plot the output of ``numpy.histogram`` to the console.
 
     Parameters
