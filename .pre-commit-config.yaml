@@ -40,5 +40,5 @@ repos:
   rev: v0.812
   hooks:
   - id: mypy
-    files: src
+    files: histoprint
     additional_dependencies: [numpy==1.20.1]

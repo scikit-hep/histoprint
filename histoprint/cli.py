@@ -1,5 +1,7 @@
 """Module containing the CLI programs for histoprint."""
 
+from io import StringIO
+
 import click
 import numpy as np
 
@@ -104,12 +106,6 @@ def histoprint(infile, **kwargs):
         data = ""
 
     if len(data) > 0:
-        try:
-            # Python 2
-            from StringIO import StringIO
-        except ImportError:
-            # Python 3
-            from io import StringIO
         data_handle = StringIO(data)
         del data
 
