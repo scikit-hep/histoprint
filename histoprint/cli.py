@@ -1,9 +1,10 @@
 """Module containing the CLI programs for histoprint."""
 
-import numpy as np
 import click
-from histoprint import *
+import numpy as np
+
 import histoprint.formatter as formatter
+from histoprint import *
 
 
 @click.command()
