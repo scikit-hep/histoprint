@@ -2,6 +2,7 @@
 
 
 from itertools import cycle
+from typing import Optional
 
 import click
 import numpy as np
@@ -19,7 +20,7 @@ class Hixel:
 
     def __init__(self, char=" ", fg="0", bg="0", use_color=True, compose=" "):
         self.character = " "
-        self.compose = compose
+        self.compose: Optional[str] = compose
         self.fg_color = fg
         self.bg_color = bg
         self.use_color = use_color
@@ -48,7 +49,7 @@ class Hixel:
                 (" ", "/"): "/",
             }
             if char in compose_chars:
-                self.compose = compose_combinations.get((self.compose, char))
+                self.compose = compose_combinations.get((self.compose, char))  # type: ignore
             else:
                 self.character = char_combinations.get((self.character, char), char)
         elif char != " ":
@@ -261,7 +262,7 @@ class BinFormatter:
                 self.compose = " "
                 break
         else:
-            self.compose = None
+            self.compose = None  # type: ignore
 
         # Format bin
         bin_string = ""
