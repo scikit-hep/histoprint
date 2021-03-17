@@ -179,9 +179,9 @@ Support for other histogram types
 ---------------------------------
 
 ``Histoprint`` can directly plot other (more fancy) types of histograms if they
-offer a way of being converted to the NumPy format. Currently this means they
-have to expose a ``numpy()`` or ``to_numpy()`` method. Both the ``TH1``
-histograms of `uproot4 <https://github.com/scikit-hep/uproot4>`__,
+follow the `PlottableProtocol` conventions, or offer a way of being converted to
+the NumPy format. Currently this means they have to expose a ``numpy()`` or
+``to_numpy()`` method. Both the ``TH1`` histograms of `uproot4 <https://github.com/scikit-hep/uproot4>`__,
 as well as the histograms of `boost-histogram <https://github.com/scikit-hep/boost-histogram>`__,
 are supported like this::
 
