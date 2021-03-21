@@ -47,6 +47,15 @@ def test_hist():
     )
 
 
+def test_nan():
+    """Test dealing with nan values."""
+
+    data = np.arange(7, dtype=float)
+    data[5] = np.nan
+    bins = np.arange(8)
+    print_hist((data, bins))
+
+
 def test_boost():
     """Test boost-histogram if it is available."""
 

@@ -411,7 +411,7 @@ class HistFormatter:
         )
         hist_width = self.columns - axis_width
 
-        counts = np.array(counts)
+        counts = np.nan_to_num(np.array(counts))
         while counts.ndim < 2:
             # Make sure counts is a 2D array
             counts = counts[np.newaxis, ...]
