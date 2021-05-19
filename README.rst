@@ -1,6 +1,6 @@
-=====================================================================
-histoprint - pretty print NumPy (and other) histograms to the console
-=====================================================================
+========================================================================
+histoprint - pretty print of NumPy (and other) histograms to the console
+========================================================================
 
 |Scikit-HEP| |PyPI| |Conda-forge|
 
