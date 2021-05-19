@@ -22,6 +22,11 @@ repos:
   rev: 5.8.0
   hooks:
   - id: isort
+  
+- repo: https://github.com/asottile/setup-cfg-fmt
+  rev: v1.17.0
+  hooks:
+  - id: setup-cfg-fmt
 
 - repo: https://github.com/asottile/pyupgrade
   rev: v2.16.0
