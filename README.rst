@@ -191,7 +191,7 @@ are supported like this::
     print_hist(hist, title="Boost Histogram")
 
     import uproot
-    file = uproot.open("http://scikit-hep.org/uproot/examples/Event.root")
+    file = uproot.open("http://scikit-hep.org/uproot3/examples/Event.root")
     hist = file["htime"]
     print_hist(hist, title="uproot TH1")
 
