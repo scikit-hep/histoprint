@@ -1,5 +1,5 @@
-# This workflows will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+# This workflow will upload a Python Package using Twine when a release is created
+# See https://scikit-hep.org/developer/gha_pure
 
 name: Upload Python Package
 
@@ -8,24 +8,34 @@ on:
     types: [created]
 
 jobs:
-  deploy:
-
+  dist:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v1
+
+    - name: Build SDist and wheel
+      run: pipx run build
+
+    - uses: actions/upload-artifact@v2
       with:
-        python-version: '3.x'
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools setuptools_scm toml wheel twine
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python setup.py sdist bdist_wheel --universal
-        twine upload dist/*
+        path: dist/*
+
+    - name: Check metadata
+      run: pipx run twine check dist/*
+
+  publish:
+    needs: [dist]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: dist
+
+    - uses: pypa/gh-action-pypi-publish@v1.4.1
+      with:
+        user: ${{ secrets.PYPI_USERNAME }}
+        password: ${{ secrets.PYPI_PASSWORD }}
