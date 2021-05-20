@@ -39,5 +39,4 @@ jobs:
 
     - uses: pypa/gh-action-pypi-publish@v1.4.1
       with:
-        user: ${{ secrets.PYPI_USERNAME }}
         password: ${{ secrets.PYPI_PASSWORD }}
