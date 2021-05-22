@@ -52,3 +52,4 @@ repos:
   rev: "0.46"
   hooks:
   - id: check-manifest
+    stages: [manual]
