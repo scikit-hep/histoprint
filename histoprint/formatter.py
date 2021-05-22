@@ -1,6 +1,6 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
-
+import shutil
 from itertools import cycle
 from typing import Optional
 
@@ -364,7 +364,7 @@ class HistFormatter:
         self.title = title
         self.edges = edges
         # Fit histograms into the terminal, unless otherwise specified
-        term_size = click.get_terminal_size()
+        term_size = shutil.get_terminal_size()
         if columns is None:
             columns = term_size[0] - 1
         if lines is None:
