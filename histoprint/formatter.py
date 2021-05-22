@@ -384,7 +384,7 @@ class HistFormatter:
         if self.summary:
             # Make room for a summary at the bottom
             self.hist_lines -= 4
-        elif any([len(lab) > 0 for lab in self.labels]):
+        elif any(len(lab) > 0 for lab in self.labels):
             # Make room for a legend at the bottom
             self.hist_lines -= 1
 
@@ -465,7 +465,7 @@ class HistFormatter:
 
         if self.summary:
             hist_string += self.summarize(counts, top, bottom)
-        elif any([len(lab) > 0 for lab in self.labels]):
+        elif any(len(lab) > 0 for lab in self.labels):
             hist_string += self.summarize(counts, top, bottom, legend_only=True)
 
         return hist_string
