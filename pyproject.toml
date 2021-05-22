@@ -13,3 +13,6 @@ write_to = "histoprint/version.py"
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+
+[tool.check-manifest]
+ignore=[".pre-commit-config.yaml", "histoprint/version.py"]

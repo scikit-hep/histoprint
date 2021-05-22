@@ -42,3 +42,8 @@ repos:
   - id: mypy
     files: histoprint
     additional_dependencies: [numpy==1.20.1]
+
+- repo: https://github.com/mgedmin/check-manifest
+  rev: "0.46"
+  hooks:
+  - id: check-manifest
