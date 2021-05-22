@@ -5,8 +5,8 @@ from io import StringIO
 import click
 import numpy as np
 
+import histoprint as hp
 import histoprint.formatter as formatter
-from histoprint import *
 
 
 @click.command()
@@ -182,7 +182,7 @@ def _histoprint_txt(infile, **kwargs):
         hist[0].append(np.histogram(d, bins=bins)[0])
 
     # Print the histogram
-    print_hist(hist, **kwargs)
+    hp.print_hist(hist, **kwargs)
 
 
 def _histoprint_csv(infile, **kwargs):
@@ -218,7 +218,7 @@ def _histoprint_csv(infile, **kwargs):
         hist[0].append(np.histogram(d, bins=bins)[0])
 
     # Print the histogram
-    print_hist(hist, **kwargs)
+    hp.print_hist(hist, **kwargs)
 
 
 def _histoprint_root(infile, **kwargs):
@@ -265,7 +265,7 @@ def _histoprint_root(infile, **kwargs):
                 pass
             else:
                 kwargs.pop("bins", None)  # Get rid of useless parameter
-                print_hist(hist, **kwargs)
+                hp.print_hist(hist, **kwargs)
                 return
 
     data = []
@@ -323,4 +323,4 @@ def _histoprint_root(infile, **kwargs):
         hist[0].append(np.histogram(d, bins=bins)[0])
 
     # Print the histogram
-    print_hist(hist, **kwargs)
+    hp.print_hist(hist, **kwargs)
