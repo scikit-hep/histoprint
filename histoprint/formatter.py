@@ -384,7 +384,7 @@ class HistFormatter:
         if self.summary:
             # Make room for a summary at the bottom
             self.hist_lines -= 4
-        elif any([len(l) > 0 for l in self.labels]):
+        elif any([len(lab) > 0 for lab in self.labels]):
             # Make room for a legend at the bottom
             self.hist_lines -= 1
 
@@ -465,7 +465,7 @@ class HistFormatter:
 
         if self.summary:
             hist_string += self.summarize(counts, top, bottom)
-        elif any([len(l) > 0 for l in self.labels]):
+        elif any([len(lab) > 0 for lab in self.labels]):
             hist_string += self.summarize(counts, top, bottom, legend_only=True)
 
         return hist_string
@@ -480,7 +480,7 @@ class HistFormatter:
 
         # First line: symbol, label
         summary += "     "
-        for _, l, s, fg, bg in zip(
+        for _, lab, s, fg, bg in zip(
             counts,
             cycle(self.labels),
             cycle(self.bin_formatter.symbols),
@@ -488,13 +488,13 @@ class HistFormatter:
             cycle(self.bin_formatter.bg_colors),
         ):
             # Pad label to make room for numbers below
-            l = f"{l:<9}"
+            lab = f"{lab:<9}"
             label = " "
             label += Hixel(
                 s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose
             ).render()
-            label += " " + l
-            label_widths.append(3 + len(l))
+            label += " " + lab
+            label_widths.append(3 + len(lab))
             summary += label
         pad = max(self.columns - (5 + np.sum(label_widths)), 0) // 2
         summary = " " * pad + summary
