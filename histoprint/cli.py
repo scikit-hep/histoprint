@@ -177,7 +177,12 @@ def _histoprint_txt(infile, **kwargs):
     data = data.T
     cut = kwargs.pop("cut", "")
     if cut is not None and len(cut) > 0:
-        data = data[:, eval(cut)]
+        try:
+            data = data[:, eval(cut)]
+        except Exception as e:
+            click.echo("Error interpreting the cut string:", err=True)
+            click.echo(e, err=True)
+            exit(1)
 
     # Interpret field numbers
     fields = kwargs.pop("fields", [])
@@ -214,7 +219,12 @@ def _histoprint_csv(infile, **kwargs):
     data = pd.read_csv(infile)
     cut = kwargs.pop("cut", "")
     if cut is not None and len(cut) > 0:
-        data = data[data.eval(cut)]
+        try:
+            data = data[data.eval(cut)]
+        except Exception as e:
+            click.echo("Error interpreting the cut string:", err=True)
+            click.echo(e, err=True)
+            exit(1)
 
     # Interpret field numbers/names
     fields = list(kwargs.pop("fields", []))
@@ -267,7 +277,7 @@ def _histoprint_root(infile, **kwargs):
     fields = list(kwargs.pop("fields", []))
     if len(fields) == 0:
         click.echo("Must specify at least one field for ROOT files.", err=True)
-        click.echo(F.keys())
+        click.echo(F.keys(), err=True)
         exit(1)
 
     # Get default columns labels
@@ -307,7 +317,8 @@ def _histoprint_root(infile, **kwargs):
             except KeyError:
                 click.echo(
                     "Could not find key '%s'. Possible values: %s"
-                    % (key, branch.keys())
+                    % (key, branch.keys()),
+                    err=True,
                 )
                 exit(1)
             # Has `arrays` method?
@@ -347,8 +358,8 @@ def _histoprint_root(infile, **kwargs):
             try:
                 d.append(eval("tree[path].array()" + slic))
             except up.KeyInFileError as e:
-                click.echo(e)
-                click.echo("Possible keys: %s" % tree.keys())
+                click.echo(e, err=True)
+                click.echo("Possible keys: %s" % tree.keys(), err=True)
                 exit(1)
 
         # Cut on values
@@ -356,8 +367,12 @@ def _histoprint_root(infile, **kwargs):
             try:
                 index = tree.arrays("cut", aliases={"cut": cut}).cut
             except up.KeyInFileError as e:
-                click.echo(e)
-                click.echo("Possible keys: %s" % tree.keys())
+                click.echo(e, err=True)
+                click.echo("Possible keys: %s" % tree.keys(), err=True)
+                exit(1)
+            except Exception as e:
+                click.echo("Error interpreting the cut string:", err=True)
+                click.echo(e, err=True)
                 exit(1)
 
             for i in range(len(d)):
