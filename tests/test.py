@@ -1,6 +1,6 @@
 import numpy as np
 
-from histoprint import *
+import histoprint as hp
 
 
 def test_hist():
@@ -11,8 +11,8 @@ def test_hist():
     C = np.random.randn(1000) + 2
     D = np.random.randn(500) * 2
 
-    text_hist(B)
-    text_hist(
+    hp.text_hist(B)
+    hp.text_hist(
         B, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5], title="Variable bin widths"
     )
 
@@ -22,8 +22,8 @@ def test_hist():
     histD = np.histogram(D, bins=15, range=(-5, 5))
     histAll = ([histA[0], histB[0], histC[0], histD[0]], histA[1])
 
-    print_hist(histAll, title="Overlays", labels="ABCDE")
-    print_hist(
+    hp.print_hist(histAll, title="Overlays", labels="ABCDE")
+    hp.print_hist(
         histAll,
         title="Stacks",
         stack=True,
@@ -31,7 +31,7 @@ def test_hist():
         bg_colors="rgbcmy",
         labels="ABCDE",
     )
-    print_hist(
+    hp.print_hist(
         histAll,
         title="Summaries",
         symbols=r"=|\/",
@@ -40,7 +40,7 @@ def test_hist():
         labels=["AAAAAAAAAAAAAAAA", "B", "CCCCCCCCCCCCC", "D"],
         summary=True,
     )
-    print_hist(
+    hp.print_hist(
         (histAll[0][:3], histAll[1]),
         title="No composition",
         labels=["A", "B", "C"],
@@ -53,7 +53,7 @@ def test_nan():
     data = np.arange(7, dtype=float)
     data[5] = np.nan
     bins = np.arange(8)
-    print_hist((data, bins))
+    hp.print_hist((data, bins))
 
 
 def test_boost():
@@ -66,14 +66,15 @@ def test_boost():
 
     hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
     hist.fill(np.random.randn(1000))
-    print_hist(hist, title="Boost Histogram")
+    hp.print_hist(hist, title="Boost Histogram")
 
 
 def test_uproot():
     """Test uproot hsitograms if it is available."""
 
     try:
-        import awkward
+        # Only used to check whether modules are available
+        import awkward  # noqa: F401
         import uproot
     except ModuleNotFoundError:
         return
@@ -86,7 +87,7 @@ def test_uproot():
         hist.show()
     except Exception:
         pass
-    print_hist(hist, title="uproot TH1")
+    hp.print_hist(hist, title="uproot TH1")
 
 
 if __name__ == "__main__":
