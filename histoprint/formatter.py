@@ -254,7 +254,7 @@ class BinFormatter:
             scale = self.scale
 
         if scale == 0:
-            scale = 1.
+            scale = 1.0
 
         # Calculate bin heights in characters
         heights = [int(c // scale) for c in counts]
@@ -402,8 +402,8 @@ class HistFormatter:
             # so all bins will scale to <= 1 lines
             # and be rendered with one line
             line_scale = np.max(edges[1:] - edges[:-1])
-        if line_scale == 0.:
-            line_scale = 1.
+        if line_scale == 0.0:
+            line_scale = 1.0
         self.bin_lines = ((edges[1:] - edges[:-1]) // line_scale).astype(int)
         self.bin_lines = np.where(self.bin_lines, self.bin_lines, 1)
         self.bin_formatter = BinFormatter(**kwargs)

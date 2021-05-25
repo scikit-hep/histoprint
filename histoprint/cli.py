@@ -1,6 +1,7 @@
 """Module containing the CLI programs for histoprint."""
 
 from io import StringIO
+from typing import Any, Dict, List
 
 import click
 import numpy as np
@@ -295,8 +296,8 @@ def _histoprint_root(infile, **kwargs):
 
     data = []
     # Find TTrees
-    trees = []
-    tree_fields = []
+    trees = []  # type: List[up.models.TTree.Model_TTree_v19]
+    tree_fields = []  # type: List[List[Dict[str, Any]]]
     for field, label in zip(fields, labels):
         branch = F
         splitfield = field.split("/")
@@ -352,8 +353,13 @@ def _histoprint_root(infile, **kwargs):
 
         # Cut on values
         if cut is not None:
-            index = tree.arrays("cut", aliases={"cut": cut}).cut
-            print(index)
+            try:
+                index = tree.arrays("cut", aliases={"cut": cut}).cut
+            except up.KeyInFileError as e:
+                click.echo(e)
+                click.echo("Possible keys: %s" % tree.keys())
+                exit(1)
+
             for i in range(len(d)):
                 d[i] = d[i][index]
 
