@@ -1,5 +1,6 @@
 include LICENSE
-include README.rst
+include *.rst
+include *.md
 include *.png
 recursive-include tests *.csv
 recursive-include tests *.py
