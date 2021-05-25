@@ -90,8 +90,9 @@ The last example does not use terminal colors, so it can be copied as text::
 Command line interface
 ----------------------
 
-``Histoprint`` also comes with a simple command-line interface to create histograms
-of tabulated data. It can read in files or take data directly from STDIN::
+``Histoprint`` also comes with a simple command-line interface to create
+histograms of tabulated data or (with the help of ``uproot``) even ROOT files.
+It can read in files or take data directly from STDIN::
 
     $ histoprint --help
     Usage: histoprint [OPTIONS] INFILE
