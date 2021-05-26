@@ -241,5 +241,5 @@ default set of characters for the 4th and 5th histogram if they are present.
 .. |Conda-forge| image:: https://img.shields.io/conda/vn/conda-forge/histoprint.svg
    :target: https://anaconda.org/conda-forge/histoprint
 
-.. |Zenodo-DOI| image:: https://zenodo.org/badge/262122846.svg
-   :target: https://zenodo.org/badge/latestdoi/262122846
+.. |Zenodo-DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4792209.svg
+   :target: http://doi.org/10.5281/zenodo.4792209
