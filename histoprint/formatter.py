@@ -6,6 +6,7 @@ from typing import Optional
 
 import click
 import numpy as np
+from uhi.numpy_plottable import ensure_plottable_histogram
 
 DEFAULT_SYMBOLS = " |=/\\"
 COMPOSING_SYMBOLS = "/\\"
@@ -559,31 +560,12 @@ def get_plottable_protocol_bin_edges(axis):
 def get_count_edges(hist):
     """Get bin contents and edges from a compatible histogram."""
 
-    # Try the PlottableProtocol
-    try:
-        count = hist.values()
-        edges = get_plottable_protocol_bin_edges(hist.axes[0])
-        # Each bin comes with both upper and lower edge
-        # Merge
-        hist = count, edges
-    except Exception:
-        pass
+    # Make sure we have a PlottableProtocol histogram
+    hist = ensure_plottable_histogram(hist)
 
-    # Try generic numpy conversion methods
-    try:
-        hist = hist.to_numpy()
-    except Exception:
-        pass
-    try:
-        hist = hist.numpy()
-    except Exception:
-        pass
-
-    # Try the Numpy interface
-    try:
-        count, edges = hist
-    except ValueError:
-        raise ValueError("Not a compatible histogram!")
+    # Use the PlottableProtocol
+    count = hist.values()
+    edges = get_plottable_protocol_bin_edges(hist.axes[0])
 
     return count, edges
 
