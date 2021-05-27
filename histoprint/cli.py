@@ -1,7 +1,7 @@
 """Module containing the CLI programs for histoprint."""
 
 from io import StringIO
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import click
 import numpy as np
@@ -202,7 +202,7 @@ def _histoprint_txt(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist = [[], bins]
+    hist = ([], bins)  # type: Tuple[Any, Any]
     for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
@@ -246,7 +246,7 @@ def _histoprint_csv(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist = [[], bins]
+    hist = ([], bins)  # type: Tuple[Any, Any]
     for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
@@ -397,7 +397,7 @@ def _histoprint_root(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist = [[], bins]
+    hist = ([], bins)
     for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
