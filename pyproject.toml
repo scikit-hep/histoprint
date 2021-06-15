@@ -16,3 +16,18 @@ multi_line_output = 3
 
 [tool.check-manifest]
 ignore=[".pre-commit-config.yaml", "histoprint/version.py"]
+
+[tool.mypy]
+files = ["histoprint"]
+python_version = "3.6"
+warn_unused_configs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "histoprint.version",
+    "pandas",
+    "uproot",
+    "awkward",
+]
+ignore_missing_imports = true
