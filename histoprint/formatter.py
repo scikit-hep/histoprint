@@ -588,7 +588,7 @@ def print_hist(hist, file=click.get_text_stream("stdout"), **kwargs):  # noqa: B
     click.echo(hist_formatter.format_histogram(count), nl=False, file=file)
 
 
-def text_hist(*args, **kwargs):
+def text_hist(*args, density=None, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
 
     print_kwargs = {
@@ -600,9 +600,9 @@ def text_hist(*args, **kwargs):
         "bg_colors": kwargs.pop("bg_colors", DEFAULT_BG_COLORS),
         "count_area": kwargs.pop("count_area", True),
     }
-    density = kwargs.pop("density", False)
     if density:
         print_kwargs["count_area"] = False
-    hist = np.histogram(*args, density=density, **kwargs)
+    kwargs["density"] = density
+    hist = np.histogram(*args, **kwargs)
     print_hist(hist, **print_kwargs)
     return hist
