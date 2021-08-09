@@ -1,4 +1,8 @@
+import io
+
 import numpy as np
+import pytest
+from uhi.numpy_plottable import ensure_plottable_histogram
 
 import histoprint as hp
 
@@ -59,10 +63,7 @@ def test_nan():
 def test_boost():
     """Test boost-histogram if it is available."""
 
-    try:
-        import boost_histogram as bh
-    except ModuleNotFoundError:
-        return
+    bh = pytest.importorskip("boost_histogram")
 
     hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
     hist.fill(np.random.randn(1000))
@@ -70,14 +71,10 @@ def test_boost():
 
 
 def test_uproot():
-    """Test uproot hsitograms if it is available."""
+    """Test uproot histograms if it is available."""
 
-    try:
-        # Only used to check whether modules are available
-        import awkward  # noqa: F401
-        import uproot
-    except ModuleNotFoundError:
-        return
+    pytest.importorskip("awkward")
+    uproot = pytest.importorskip("uproot")
 
     with uproot.open("tests/data/histograms.root") as F:
         hist = F["one"]
@@ -90,7 +87,34 @@ def test_uproot():
     hp.print_hist(hist, title="uproot TH1")
 
 
-if __name__ == "__main__":
-    test_hist()
-    test_boost()
-    test_uproot()
+def test_stack():
+    A = np.random.randn(1000) - 2
+    B = np.random.randn(1000)
+    C = np.random.randn(1000) + 2
+    D = np.random.randn(500) * 2
+
+    hp.text_hist(B)
+    hp.text_hist(
+        B, bins=[-5, -3, -2, -1, -0.5, 0, 0.5, 1, 2, 3, 5], title="Variable bin widths"
+    )
+
+    histA = np.histogram(A, bins=15, range=(-5, 5))
+    histB = np.histogram(B, bins=15, range=(-5, 5))
+    histC = np.histogram(C, bins=15, range=(-5, 5))
+    histD = np.histogram(D, bins=15, range=(-5, 5))
+    histAll = ([histA[0], histB[0], histC[0], histD[0]], histA[1])
+
+    hA = ensure_plottable_histogram(histA)
+    hB = ensure_plottable_histogram(histB)
+    hC = ensure_plottable_histogram(histC)
+    hD = ensure_plottable_histogram(histD)
+
+    hist_stack = [hA, hB, hC, hD]
+
+    out1 = io.StringIO()
+    out2 = io.StringIO()
+
+    hp.print_hist(histAll, file=out1, title="Overlays", labels="ABCD")
+    hp.print_hist(hist_stack, file=out2, title="Overlays", labels="ABCD")
+
+    assert out1.getvalue() == out2.getvalue()

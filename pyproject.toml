@@ -10,12 +10,23 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 write_to = "histoprint/version.py"
 
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra --strict-markers --showlocals --color=yes"
+testpaths = [
+    "tests",
+]
+
 [tool.isort]
 profile = "black"
 multi_line_output = 3
 
 [tool.check-manifest]
-ignore=[".pre-commit-config.yaml", "histoprint/version.py"]
+ignore = [
+    ".pre-commit-config.yaml",
+    "histoprint/version.py",
+    "noxfile.py",
+]
 
 [tool.mypy]
 files = ["histoprint"]
