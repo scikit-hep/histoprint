@@ -1,12 +1,14 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
 import shutil
+from collections.abc import Sequence
 from itertools import cycle
 from typing import Optional
 
 import click
 import numpy as np
 from uhi.numpy_plottable import ensure_plottable_histogram
+from uhi.typing.plottable import PlottableHistogram
 
 DEFAULT_SYMBOLS = " |=/\\"
 COMPOSING_SYMBOLS = "/\\"
@@ -560,12 +562,23 @@ def get_plottable_protocol_bin_edges(axis):
 def get_count_edges(hist):
     """Get bin contents and edges from a compatible histogram."""
 
-    # Make sure we have a PlottableProtocol histogram
-    hist = ensure_plottable_histogram(hist)
+    # Support sequence of histograms
+    if isinstance(hist, Sequence) and isinstance(hist[0], PlottableHistogram):
+        count = np.stack([h.values() for h in hist])
+        edges = get_plottable_protocol_bin_edges(hist[0].axes[0])
+        for other_edges in (
+            get_plottable_protocol_bin_edges(h.axes[0]) for h in hist[1:]
+        ):
+            np.testing.assert_allclose(edges, other_edges)
 
-    # Use the PlottableProtocol
-    count = hist.values()
-    edges = get_plottable_protocol_bin_edges(hist.axes[0])
+    else:
+        # Single histogram or (a,b,c, edges) tuple:
+        # Make sure we have a PlottableProtocol histogram
+        hist = ensure_plottable_histogram(hist)
+
+        # Use the PlottableProtocol
+        count = hist.values()
+        edges = get_plottable_protocol_bin_edges(hist.axes[0])
 
     return count, edges
 
