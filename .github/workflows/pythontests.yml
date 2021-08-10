@@ -28,7 +28,7 @@ jobs:
     - name: Install optional dependencies for tests
       run: pip install pandas
     - name: Run tests
-      run: python -m pytest
+      run: python -m pytest -s
     - name: Run CLI
       run: |
         histoprint tests/data/1D.txt

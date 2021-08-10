@@ -22,7 +22,7 @@ def tests(session):
     Run the unit and regular tests.
     """
     session.install(".[test,boost,root]")
-    session.run("pytest", *session.posargs)
+    session.run("pytest", "-s", *session.posargs)
 
 
 @nox.session
