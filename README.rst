@@ -239,7 +239,7 @@ default set of characters for the 4th and 5th histogram if they are present.
    :target: https://pypi.python.org/pypi/histoprint
 
 .. |Conda-forge| image:: https://img.shields.io/conda/vn/conda-forge/histoprint.svg
-   :target: https://anaconda.org/conda-forge/histoprint
+   :target: https://github.com/conda-forge/histoprint-feedstock
 
 .. |Zenodo-DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4792209.svg
    :target: http://doi.org/10.5281/zenodo.4792209
