@@ -15,10 +15,22 @@ used in those terminals, but the character set needs to be constrained to the
 non-combining ones (see below).
 
 
-Examples
---------
+Installation
+------------
 
-Some examples::
+::
+
+    $ pip install [--user] histoprint
+
+::
+
+    $ conda install -c conda-forge histoprint
+
+
+Getting started
+---------------
+
+Basic examples::
 
     import numpy as np
     from histoprint import text_hist, print_hist
@@ -87,11 +99,45 @@ The last example does not use terminal colors, so it can be copied as text::
            Std:  1.03e+00           1.03e+00    9.94e-01        2.00e+00
 
 
+Support for other histogram types
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``Histoprint`` can directly plot other (more fancy) types of histograms if they
+follow the `PlottableProtocol` conventions, or offer a way of being converted to
+the NumPy format. Currently this means they have to expose a ``numpy()`` or
+``to_numpy()`` method. Both the ROOT ``TH1`` histograms of `uproot4 <https://github.com/scikit-hep/uproot4>`__,
+as well as the histograms of `boost-histogram <https://github.com/scikit-hep/boost-histogram>`__,
+are supported::
+
+    import boost_histogram as bh
+    hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
+    hist.fill(np.random.randn(1000))
+    print_hist(hist, title="Boost Histogram")
+
+    import uproot
+    file = uproot.open("http://scikit-hep.org/uproot3/examples/Event.root")
+    hist = file["htime"]
+    print_hist(hist, title="uproot TH1")
+
+
+Disabling Unicode combining characters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some terminals are not able to display Unicode combining characters correctly.
+To disable the use of combining characters, simply do not use them when calling
+``print_hist``::
+
+    print_hist(some_histograms, symbols=" =|")
+
+The combining characters are ``/`` and ``\``. Note that they are used in the
+default set of characters for the 4th and 5th histogram if they are present.
+
+
 Command line interface
 ----------------------
 
 ``Histoprint`` also comes with a simple command-line interface to create
-histograms of tabulated data or (with the help of ``uproot``) even ROOT files.
+histograms of tabulated data or even ROOT files (with the help of ``uproot``).
 It can read in files or take data directly from STDIN::
 
     $ histoprint --help
@@ -184,52 +230,6 @@ It can read in files or take data directly from STDIN::
                              Tot:  6.00e+00    5.00e+00
                              Avg:  2.17e+00    3.20e+00
                              Std:  6.87e-01    7.48e-01
-
-
-Support for other histogram types
----------------------------------
-
-``Histoprint`` can directly plot other (more fancy) types of histograms if they
-follow the `PlottableProtocol` conventions, or offer a way of being converted to
-the NumPy format. Currently this means they have to expose a ``numpy()`` or
-``to_numpy()`` method. Both the ``TH1`` histograms of `uproot4 <https://github.com/scikit-hep/uproot4>`__,
-as well as the histograms of `boost-histogram <https://github.com/scikit-hep/boost-histogram>`__,
-are supported like this::
-
-    import boost_histogram as bh
-    hist = bh.Histogram(bh.axis.Regular(20, -3, 3))
-    hist.fill(np.random.randn(1000))
-    print_hist(hist, title="Boost Histogram")
-
-    import uproot
-    file = uproot.open("http://scikit-hep.org/uproot3/examples/Event.root")
-    hist = file["htime"]
-    print_hist(hist, title="uproot TH1")
-
-
-How to get it?
---------------
-
-::
-
-    $ pip install [--user] histoprint
-
-::
-
-    $ conda install -c conda-forge histoprint
-
-
-Disabling Unicode combining characters
---------------------------------------
-
-Some terminals are not able to display Unicode combining characters correctly.
-To disable the use of combining characters, simply do not use them when calling
-``print_hist``::
-
-    print_hist(some_histograms, symbols=" =|")
-
-The combining characters are ``/`` and ``\``. Note that they are used in the
-default set of characters for the 4th and 5th histogram if they are present.
 
 
 .. |Scikit-HEP| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
