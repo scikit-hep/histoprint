@@ -20,7 +20,7 @@ Installation
 
 ::
 
-    $ pip install [--user] histoprint
+    $ python -m pip install histoprint
 
 ::
 
