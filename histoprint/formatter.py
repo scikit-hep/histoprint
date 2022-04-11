@@ -1,11 +1,11 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
 import shutil
+import sys
 from collections.abc import Sequence
 from itertools import cycle
 from typing import Optional
 
-import click
 import numpy as np
 from uhi.numpy_plottable import ensure_plottable_histogram
 from uhi.typing.plottable import PlottableHistogram
@@ -583,7 +583,7 @@ def get_count_edges(hist):
     return count, edges
 
 
-def print_hist(hist, file=click.get_text_stream("stdout"), **kwargs):  # noqa: B008
+def print_hist(hist, file=None, **kwargs):  # noqa: B008
     """Plot the output of ``numpy.histogram`` to the console.
 
     Parameters
@@ -595,17 +595,19 @@ def print_hist(hist, file=click.get_text_stream("stdout"), **kwargs):  # noqa: B
         Additional keyword arguments are passed to the `HistFormatter`.
 
     """
-
+    if file is None:
+        file = sys.stdout
     count, edges = get_count_edges(hist)
     hist_formatter = HistFormatter(edges, **kwargs)
-    click.echo(hist_formatter.format_histogram(count), nl=False, file=file)
+    sys.stdout.write(hist_formatter.format_histogram(count))
+    sys.stdout.flush()
 
 
 def text_hist(*args, density=None, **kwargs):
     """Thin wrapper around ``numpy.histogram``."""
 
     print_kwargs = {
-        "file": kwargs.pop("file", click.get_text_stream("stdout")),
+        "file": kwargs.pop("file", sys.stdout),
         "title": kwargs.pop("title", ""),
         "stack": kwargs.pop("stack", False),
         "symbols": kwargs.pop("symbols", DEFAULT_SYMBOLS),
