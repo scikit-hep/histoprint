@@ -599,8 +599,8 @@ def print_hist(hist, file=None, **kwargs):  # noqa: B008
         file = sys.stdout
     count, edges = get_count_edges(hist)
     hist_formatter = HistFormatter(edges, **kwargs)
-    sys.stdout.write(hist_formatter.format_histogram(count))
-    sys.stdout.flush()
+    file.write(hist_formatter.format_histogram(count))
+    file.flush()
 
 
 def text_hist(*args, density=None, **kwargs):
