@@ -160,27 +160,27 @@ class BinFormatter:
     scale : float
         The scale of the histogram, i.e. one text character corresponds to
         `scale` counts.
-    count_area : bool
+    count_area : bool, optional
         Whether the bin content is represented by the area or height of the bin.
-    tick_format : st
+    tick_format : str, optional
         The format string for tick values.
-    tick_format_width : int
+    tick_format_width : int, optional
         Width of the evaluated tick format.
-    tick_mark : str
+    tick_mark : str, optional
         Character of the tick mark.
-    no_tick_mark : str
+    no_tick_mark : str, optional
         Character to be printed for axis without tick.
-    print_top_edge : bool
+    print_top_edge : bool, optional
         Whether to print the top or bottom edge of the bin.
-    symbols : iterable
+    symbols : iterable, optional
         The foreground symbols to be used for the histograms.
-    fg_colors : iterable
+    fg_colors : iterable, optional
         The foreground colours to be used.
-    bg_colors : iterable
+    bg_colors : iterable, optional
         The background colours to be used.
-    stack : bool
+    stack : bool, optional
         Whether to stack the histograms, or overlay them.
-    use_color : bool
+    use_color : bool, optional
         Whether to use color output.
 
     Notes
@@ -332,19 +332,19 @@ class HistFormatter:
     Parameters
     ----------
 
-    lines, columns : int
+    lines, columns : int, optional
         The number of lines and maximum numbre of columns of the output.
-    count_area : bool
+    count_area : bool, optional
         Whether the bin content is represented by the area or height of the bin.
-    scale_bin_width : bool
+    scale_bin_width : bool, optional
         Whether the lines per bin should scale with the bin width.
-    title : str
+    title : str, optional
         Title string to print over the histogram.
-    summary : bool
-        Whether to print a summary of the histograms.
-    labels : iterable
+    labels : iterable, optional
         Labels the histograms.
-    **kwargs :
+    summary : bool, optional
+        Whether to print a summary of the histograms.
+    **kwargs : optional
         Additional keyword arguments are passed to the `BinFormatter`
 
     Notes
@@ -412,7 +412,15 @@ class HistFormatter:
         self.bin_formatter = BinFormatter(**kwargs)
 
     def format_histogram(self, counts):
-        """Format (a set of) histogram counts."""
+        """Format (a set of) histogram counts.
+
+        Paramters
+        ---------
+
+        counts : ndarray
+            The histogram entries to be plotted.
+
+        """
 
         axis_width = self.bin_formatter.tick_format_width + len(
             self.bin_formatter.tick_mark
