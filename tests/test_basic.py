@@ -118,3 +118,24 @@ def test_stack():
     hp.print_hist(hist_stack, file=out2, title="Overlays", labels="ABCD")
 
     assert out1.getvalue() == out2.getvalue()
+
+
+def test_rich_histogram():
+    """Test updating the values of a histogram object."""
+    rich = pytest.importorskip("rich")
+
+    A = np.random.randn(1000) - 2
+    B = np.random.randn(1000) + 2
+
+    hA = np.histogram(A, bins=np.linspace(-5, 5, 11))
+    hB = np.histogram(B, bins=hA[1])
+
+    hist = hp.RichHistogram(hA)
+
+    rich.print(hist)
+
+    # Update values
+    count = hA[0]
+    count += hB[0]
+
+    rich.print(hist)

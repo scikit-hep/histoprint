@@ -15,7 +15,7 @@ COMPOSING_SYMBOLS = "/\\"
 DEFAULT_FG_COLORS = "WWWWW"
 DEFAULT_BG_COLORS = "K0000"
 
-__all__ = ["print_hist", "text_hist", "HistFormatter"]
+__all__ = ["print_hist", "text_hist", "HistFormatter", "RichHistogram"]
 
 
 class Hixel:
@@ -629,3 +629,35 @@ def text_hist(*args, density=None, **kwargs):
     hist = np.histogram(*args, **kwargs)
     print_hist(hist, **print_kwargs)
     return hist
+
+
+class RichHistogram:
+    """Histogram object that supports `Rich`'s `Console Protocol`.
+
+    Ths provided `hist` is kept as a reference, so it is possible to update its
+    contents after the creation of the RichHistogram.
+
+    Parameters
+    ----------
+
+    hist :
+        A compatible histogram type.
+    **kwargs : optional
+        Additional keyword arguments are passed to the `HistFormatter`.
+
+    """
+
+    def __init__(self, hist, **kwargs):
+        self.hist = hist
+        self.kwargs = kwargs
+        import rich
+
+        self._rich_from_ansi = rich.text.Text.from_ansi
+
+    def __rich__(self):
+        """Output rich formatted histogram."""
+
+        count, edges = get_count_edges(self.hist)
+        self.hist_formatter = HistFormatter(edges, **self.kwargs)
+
+        return self._rich_from_ansi(self.hist_formatter.format_histogram(count))

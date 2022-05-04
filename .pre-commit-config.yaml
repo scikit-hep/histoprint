@@ -47,7 +47,7 @@ repos:
   - id: mypy
     files: histoprint
     args: []
-    additional_dependencies: [numpy, types-click, uhi]
+    additional_dependencies: [numpy, types-click, uhi, rich]
 
 - repo: https://github.com/mgedmin/check-manifest
   rev: "0.48"
