@@ -24,7 +24,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
-      run: python -m pip install -e .[test,boost,root]
+      run: python -m pip install -e .[test,boost,uproot]
     - name: Install optional dependencies for tests
       run: pip install pandas
     - name: Run tests
