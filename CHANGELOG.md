@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0]
+
+### Changed
+- Change name of optional extra requirement from 'root' to 'uproot'.
+
 ## [2.2.0]
 
 ### Added
