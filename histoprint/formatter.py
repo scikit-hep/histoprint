@@ -650,7 +650,7 @@ class RichHistogram:
     def __init__(self, hist, **kwargs):
         self.hist = hist
         self.kwargs = kwargs
-        import rich
+        import rich.text
 
         self._rich_from_ansi = rich.text.Text.from_ansi
 
@@ -658,6 +658,11 @@ class RichHistogram:
         """Output rich formatted histogram."""
 
         count, edges = get_count_edges(self.hist)
-        self.hist_formatter = HistFormatter(edges, **self.kwargs)
+        hist_formatter = HistFormatter(edges, **self.kwargs)
 
-        return self._rich_from_ansi(self.hist_formatter.format_histogram(count))
+        text = self._rich_from_ansi(hist_formatter.format_histogram(count))
+        # Make sure lines are never wrapped or right-justified
+        text.justify = "left"
+        text.overflow = "ellipsis"
+        text.no_wrap = True
+        return text

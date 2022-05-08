@@ -130,7 +130,7 @@ def test_rich_histogram():
     hA = np.histogram(A, bins=np.linspace(-5, 5, 11))
     hB = np.histogram(B, bins=hA[1])
 
-    hist = hp.RichHistogram(hA)
+    hist = hp.RichHistogram(hA, columns=30)
 
     rich.print(hist)
 
@@ -139,3 +139,16 @@ def test_rich_histogram():
     count += hB[0]
 
     rich.print(hist)
+
+    from rich.table import Table
+
+    tab = Table(title="Test table")
+    tab.add_column("left justify", justify="left", width=29)
+    tab.add_column("center justify", justify="center", width=35)
+    tab.add_column("right justify", justify="right", width=35)
+
+    from rich.align import Align
+
+    tab.add_row(hist, Align.center(hist), Align.right(hist))
+
+    rich.print(tab)
