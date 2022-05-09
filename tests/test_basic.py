@@ -124,13 +124,15 @@ def test_rich_histogram():
     """Test updating the values of a histogram object."""
     rich = pytest.importorskip("rich")
 
+    from histoprint.rich import RichHistogram
+
     A = np.random.randn(1000) - 2
     B = np.random.randn(1000) + 2
 
     hA = np.histogram(A, bins=np.linspace(-5, 5, 11))
     hB = np.histogram(B, bins=hA[1])
 
-    hist = hp.RichHistogram(hA, columns=30)
+    hist = RichHistogram(hA, columns=30)
 
     rich.print(hist)
 
