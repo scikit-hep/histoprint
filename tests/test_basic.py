@@ -34,13 +34,13 @@ def test_hist():
         symbols="      ",
         bg_colors="rgbcmy",
         labels="ABCDE",
+        max_count=600.0,
     )
     hp.print_hist(
         histAll,
         title="Summaries",
         symbols=r"=|\/",
-        fg_colors="0",
-        bg_colors="0",
+        use_color=False,
         labels=["AAAAAAAAAAAAAAAA", "B", "CCCCCCCCCCCCC", "D"],
         summary=True,
     )
@@ -49,6 +49,33 @@ def test_hist():
         title="No composition",
         labels=["A", "B", "C"],
     )
+
+
+def test_width():
+    """Test output width."""
+    hist = np.histogram(np.random.randn(100) / 1000)
+    f = io.StringIO()
+    hp.print_hist(hist, file=f, columns=30, use_color=False)
+    f.flush
+    f.seek(0)
+    n_max = 0
+    for line in f:
+        print(line, end="")
+        n = len(line.rstrip())
+        n_max = np.max((n, n_max))
+    assert n_max == 30
+
+    hist = (np.array((100.5, 17.5)), np.array((0, 1, 2)))
+    f = io.StringIO()
+    hp.print_hist(hist, file=f, columns=30, use_color=False)
+    f.flush
+    f.seek(0)
+    n_max = 0
+    for line in f:
+        print(line, end="")
+        n = len(line.rstrip())
+        n_max = np.max((n, n_max))
+    assert n_max == 30
 
 
 def test_nan():
