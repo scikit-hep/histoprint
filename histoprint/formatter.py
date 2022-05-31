@@ -160,27 +160,25 @@ class BinFormatter:
     scale : float
         The scale of the histogram, i.e. one text character corresponds to
         `scale` counts.
-    count_area : bool
+    count_area : bool, optional
         Whether the bin content is represented by the area or height of the bin.
-    tick_format : st
+    tick_format : str, optional
         The format string for tick values.
-    tick_format_width : int
-        Width of the evaluated tick format.
-    tick_mark : str
+    tick_mark : str, optional
         Character of the tick mark.
-    no_tick_mark : str
+    no_tick_mark : str, optional
         Character to be printed for axis without tick.
-    print_top_edge : bool
+    print_top_edge : bool, optional
         Whether to print the top or bottom edge of the bin.
-    symbols : iterable
+    symbols : iterable, optional
         The foreground symbols to be used for the histograms.
-    fg_colors : iterable
+    fg_colors : iterable, optional
         The foreground colours to be used.
-    bg_colors : iterable
+    bg_colors : iterable, optional
         The background colours to be used.
-    stack : bool
+    stack : bool, optional
         Whether to stack the histograms, or overlay them.
-    use_color : bool
+    use_color : bool, optional
         Whether to use color output.
 
     Notes
@@ -197,8 +195,7 @@ class BinFormatter:
         self,
         scale=1.0,
         count_area=True,
-        tick_format="% .2e ",
-        tick_format_width=10,
+        tick_format="% #7.3f ",
         tick_mark="_",
         no_tick_mark=" ",
         print_top_edge=False,
@@ -211,7 +208,7 @@ class BinFormatter:
         self.scale = scale
         self.count_area = count_area
         self.tick_format = tick_format
-        self.tick_format_width = tick_format_width
+        self.tick_format_width = len(tick_format % (0.0,))
         self.tick_mark = tick_mark
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
@@ -332,19 +329,23 @@ class HistFormatter:
     Parameters
     ----------
 
-    lines, columns : int
+    lines, columns : int, optional
         The number of lines and maximum numbre of columns of the output.
-    count_area : bool
+    count_area : bool, optional
         Whether the bin content is represented by the area or height of the bin.
-    scale_bin_width : bool
+    scale_bin_width : bool, optional
         Whether the lines per bin should scale with the bin width.
-    title : str
+    title : str, optional
         Title string to print over the histogram.
-    summary : bool
-        Whether to print a summary of the histograms.
-    labels : iterable
+    labels : iterable, optional
         Labels the histograms.
-    **kwargs :
+    summary : bool, optional
+        Whether to print a summary of the histograms.
+    max_count : float / int, optional
+        Set the maximum bin content for plotting. Otherwise largest bin will
+        fill the available width. Should be a count density of counts per row
+        if `count_area` is set.
+    **kwargs : optional
         Additional keyword arguments are passed to the `BinFormatter`
 
     Notes
@@ -365,6 +366,7 @@ class HistFormatter:
         title="",
         labels=("",),
         summary=False,
+        max_count=None,
         **kwargs,
     ):
         self.title = title
@@ -380,6 +382,7 @@ class HistFormatter:
         self.columns = columns
         self.summary = summary
         self.labels = labels
+        self.max_count = max_count
 
         self.hist_lines = lines - 1  # Less one line for the first tick
         if len(self.title):
@@ -412,7 +415,15 @@ class HistFormatter:
         self.bin_formatter = BinFormatter(**kwargs)
 
     def format_histogram(self, counts):
-        """Format (a set of) histogram counts."""
+        """Format (a set of) histogram counts.
+
+        Paramters
+        ---------
+
+        counts : ndarray
+            The histogram entries to be plotted.
+
+        """
 
         axis_width = self.bin_formatter.tick_format_width + len(
             self.bin_formatter.tick_mark
@@ -440,7 +451,12 @@ class HistFormatter:
             c = tot_c
 
         # Set a scale so that largest bin fills width of allocated area
-        symbol_scale = np.max(c) / hist_width
+        if self.max_count is None:
+            max_c = np.max(c)
+        else:
+            max_c = self.max_count
+
+        symbol_scale = max_c / hist_width
         self.bin_formatter.scale = symbol_scale * 0.999  # <- avoid rounding issues
 
         hist_string = ""
@@ -449,23 +465,29 @@ class HistFormatter:
         if len(self.title):
             hist_string += ("{: ^%ds}\n" % (self.columns,)).format(self.title)
 
-        top = self.edges[:-1]
-        bottom = self.edges[1:]
+        # Get bin edges
+        top = np.array(self.edges[:-1])
+        bottom = np.array(self.edges[1:])
+        # Caclucate common exponent
+        common_exponent = np.floor(np.log10(np.max(np.abs(self.edges))))
+        top /= 10**common_exponent
+        bottom /= 10**common_exponent
 
-        # Write the first tick and horizontal axis
+        # Write the first tick, common exponent and horizontal axis
         hist_string += self.bin_formatter.tick(top[0])
-        longest_count = tot_c[np.argmax(c)]
-        if np.issubdtype(longest_count.dtype, np.integer):
-            hist_string += ("{: %dd} \u2577\n" % (hist_width - 2,)).format(
-                longest_count
-            )
+        if common_exponent != 0:
+            ce_string = " x 10^%+03d" % (common_exponent,)
         else:
-            # Pad with spaces
-            hist_string += " " * (hist_width - axis_width)
-            # The tick value
-            hist_string += self.bin_formatter.tick_format % (longest_count,)
-            # The tick
-            hist_string += "\u2577\n"
+            ce_string = ""
+
+        hist_string += ce_string
+        if self.bin_formatter.count_area:
+            longest_count = f"{max_c:g}/row"
+        else:
+            longest_count = f"{max_c:g}"
+        hist_string += ("{:>%ds} \u2577\n" % (hist_width - len(ce_string) - 2,)).format(
+            longest_count
+        )
 
         # Write the bins
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
