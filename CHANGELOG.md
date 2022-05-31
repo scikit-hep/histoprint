@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0]
+
 ### Addded
 - RichHistogram class for use with the `rich` package.
 - Argument to set maximum count in bins for plotting.
