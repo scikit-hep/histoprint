@@ -21,7 +21,7 @@ def tests(session):
     """
     Run the unit and regular tests.
     """
-    session.install(".[test,boost,root]")
+    session.install(".[test,boost,uproot,rich]")
     session.run("pytest", "-s", *session.posargs)
 
 
