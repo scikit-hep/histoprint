@@ -202,7 +202,7 @@ def _histoprint_txt(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist = ([], bins)  # type: Tuple[Any, Any]
+    hist: Tuple[Any, Any] = ([], bins)
     for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
@@ -246,7 +246,7 @@ def _histoprint_csv(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist = ([], bins)  # type: Tuple[Any, Any]
+    hist: Tuple[Any, Any] = ([], bins)
     for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
@@ -306,8 +306,8 @@ def _histoprint_root(infile, **kwargs):
 
     data = []
     # Find TTrees
-    trees = []  # type: List[up.models.TTree.Model_TTree_v19]
-    tree_fields = []  # type: List[List[Dict[str, Any]]]
+    trees: List[up.models.TTree.Model_TTree_v19] = []
+    tree_fields: List[List[Dict[str, Any]]] = []
     for field, label in zip(fields, labels):
         branch = F
         splitfield = field.split("/")
