@@ -34,7 +34,7 @@ class Hixel:
 
         allowed = r" =|\/"
         if char not in allowed:
-            raise ValueError(f"Symbol not one of the allowed: '{allowed}'")
+            raise ValueError(f"Symbol not one of the allowed: {allowed!r}")
 
         if fg == self.fg_color:
             # Combine characters if possible
