@@ -1,3 +1,8 @@
+ci:
+    # Mypy fails for some checks on Numpy (!), but only on the pre-commit.ci
+    # Is still tested in the GitHub CI, so save to just disable here
+    skip: [mypy]
+
 repos:
 - repo: https://github.com/psf/black
   rev: 23.1.0
