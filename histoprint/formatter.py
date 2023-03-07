@@ -34,7 +34,8 @@ class Hixel:
 
         allowed = r" =|\/"
         if char not in allowed:
-            raise ValueError(f"Symbol not one of the allowed: {allowed!r}")
+            msg = f"Symbol not one of the allowed: '{allowed!r}'"
+            raise ValueError(msg)
 
         if fg == self.fg_color:
             # Combine characters if possible
@@ -52,7 +53,8 @@ class Hixel:
                 (" ", "/"): "/",
             }
             if char in compose_chars:
-                self.compose = compose_combinations.get((self.compose, char))  # type: ignore
+                if self.compose is not None:
+                    self.compose = compose_combinations.get((self.compose, char))
             else:
                 self.character = char_combinations.get((self.character, char), char)
         elif char != " ":
@@ -229,6 +231,7 @@ class BinFormatter:
                 self.use_color = False
         else:
             self.use_color = use_color
+        self.compose: Optional[str] = None
 
     def format_bin(self, top, bottom, counts, width=1):
         """Return a string that represents the bin.
@@ -248,10 +251,7 @@ class BinFormatter:
         """
 
         # Adjust scale by width if area represents counts
-        if self.count_area:
-            scale = self.scale * width
-        else:
-            scale = self.scale
+        scale = self.scale * (width if self.count_area else 1)
 
         if scale == 0:
             scale = 1.0
@@ -265,7 +265,7 @@ class BinFormatter:
                 self.compose = " "
                 break
         else:
-            self.compose = None  # type: ignore
+            self.compose = None
 
         # Format bin
         bin_string = ""
@@ -444,17 +444,11 @@ class HistFormatter:
             tot_c = np.max(counts, axis=0)
 
         # Get bin lengths
-        if self.bin_formatter.count_area:
-            # Bin content will be divided by number of lines
-            c = tot_c / self.bin_lines
-        else:
-            c = tot_c
+        # Bin content will be divided by number of lines
+        c = tot_c / self.bin_lines if self.bin_formatter.count_area else tot_c
 
         # Set a scale so that largest bin fills width of allocated area
-        if self.max_count is None:
-            max_c = np.max(c)
-        else:
-            max_c = self.max_count
+        max_c = np.max(c) if self.max_count is None else self.max_count
 
         symbol_scale = max_c / hist_width
         self.bin_formatter.scale = symbol_scale * 0.999  # <- avoid rounding issues
@@ -475,10 +469,7 @@ class HistFormatter:
 
         # Write the first tick, common exponent and horizontal axis
         hist_string += self.bin_formatter.tick(top[0])
-        if common_exponent != 0:
-            ce_string = " x 10^%+03d" % (common_exponent,)
-        else:
-            ce_string = ""
+        ce_string = " x 10^%+03d" % (common_exponent,) if common_exponent != 0 else ""
 
         hist_string += ce_string
         if self.bin_formatter.count_area:
@@ -518,13 +509,13 @@ class HistFormatter:
             cycle(self.bin_formatter.bg_colors),
         ):
             # Pad label to make room for numbers below
-            lab = f"{lab:<9}"
+            pad_lab = f"{lab:<9}"
             label = " "
             label += Hixel(
                 s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose
             ).render()
-            label += " " + lab
-            label_widths.append(3 + len(lab))
+            label += " " + pad_lab
+            label_widths.append(3 + len(pad_lab))
             summary += label
         pad = max(self.columns - (5 + np.sum(label_widths)), 0) // 2
         summary = " " * pad + summary
@@ -577,7 +568,7 @@ def get_plottable_protocol_bin_edges(axis):
     ), f"Currently only support non-discrete axes {axis}"
     # TODO: Support discreete axes
     out[0] = axis[0][0]
-    out[1:] = [axis[i][1] for i in range(len(axis))]  # type: ignore
+    out[1:] = [axis[i][1] for i in range(len(axis))]
     return out
 
 
@@ -605,7 +596,7 @@ def get_count_edges(hist):
     return count, edges
 
 
-def print_hist(hist, file=None, **kwargs):  # noqa: B008
+def print_hist(hist, file=None, **kwargs):
     """Plot the output of ``numpy.histogram`` to the console.
 
     Parameters

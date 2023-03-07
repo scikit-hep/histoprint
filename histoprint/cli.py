@@ -1,5 +1,6 @@
 """Module containing the CLI programs for histoprint."""
 
+import contextlib
 from io import StringIO
 from typing import Any, Dict, List, Tuple
 
@@ -178,7 +179,7 @@ def _histoprint_txt(infile, **kwargs):
     cut = kwargs.pop("cut", "")
     if cut is not None and len(cut) > 0:
         try:
-            data = data[:, eval(cut)]
+            data = data[:, eval(cut)]  # noqa: PGH001
         except Exception as e:
             click.echo("Error interpreting the cut string:", err=True)
             click.echo(e, err=True)
@@ -349,14 +350,11 @@ def _histoprint_root(infile, **kwargs):
             labels.append(field["label"])
             split = field["path"].split("[")
             path = split[0]
-            if len(split) > 1:
-                slic = "[" + "[".join(split[1:])
-            else:
-                slic = ""
+            slic = "[" + "[".join(split[1:]) if len(split) > 1 else ""
             aliases[field["label"]] = path
             # Get the branches
             try:
-                d.append(eval("tree[path].array()" + slic))
+                d.append(eval("tree[path].array()" + slic))  # noqa: PGH001
             except up.KeyInFileError as e:
                 click.echo(e, err=True)
                 click.echo("Possible keys: %s" % tree.keys(), err=True)
@@ -380,10 +378,8 @@ def _histoprint_root(infile, **kwargs):
 
         # Flatten if necessary
         for i in range(len(d)):
-            try:
+            with contextlib.suppress(ValueError):
                 d[i] = ak.flatten(d[i])
-            except ValueError:
-                pass
 
             # Turn into flat numpy array
             d[i] = ak.to_numpy(d[i])
