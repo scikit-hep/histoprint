@@ -1,3 +1,4 @@
+import contextlib
 import io
 
 import numpy as np
@@ -106,11 +107,9 @@ def test_uproot():
     with uproot.open("tests/data/histograms.root") as F:
         hist = F["one"]
 
-    try:
+    with contextlib.suppress(Exception):
         # Works with uproot 3
         hist.show()
-    except Exception:
-        pass
     hp.print_hist(hist, title="uproot TH1")
 
 
