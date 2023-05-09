@@ -34,7 +34,7 @@ repos:
   - id: setup-cfg-fmt
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.3.1
+  rev: v3.4.0
   hooks:
   - id: pyupgrade
     args: ["--py36-plus"]
