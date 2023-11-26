@@ -9,6 +9,11 @@ import numpy as np
 import histoprint as hp
 import histoprint.formatter as formatter
 
+def fieldprefixer_callback(ctx, param, fields):
+    if 'field_prefix' in ctx.params:
+        fields = map(lambda field: ctx.params['field_prefix'] + field, fields)
+    return tuple(fields)
+
 
 @click.command()
 @click.argument("infile", type=click.Path(exists=True, dir_okay=False, allow_dash=True))
@@ -74,6 +79,16 @@ import histoprint.formatter as formatter
     "single TH1, or one or more paths to TTree branches. Also supports slicing "
     "of array-like branches, e.g. use 'tree/branch[:,2]' to histogram the 3rd "
     "elements of a vector-like branch.",
+    callback=fieldprefixer_callback
+)
+@click.option(
+    "--field-prefix",
+    "field_prefix",
+    type=str,
+    multiple=False,
+    help="String to prepend to each argument passed to --field option following --field-prefix"
+    "\nE.g. `histoprint -f Muon_eta --field-prefix Tau_ -f eta -f phi` ... would refer to fields"
+    "\n\t`Muon_eta`, `Tau_eta` and `Tau_phi`'",
 )
 @click.option(
     "-C",
@@ -109,6 +124,7 @@ def histoprint(infile, **kwargs):
 
     INFILE can be '-', in which case the data is read from STDIN.
     """
+    del kwargs["field_prefix"]
 
     # Read file into buffer for use by implementations
     try:
@@ -147,7 +163,6 @@ def histoprint(infile, **kwargs):
 
     click.echo("Could not interpret file format.", err=True)
     exit(1)
-
 
 def _bin_edges(kwargs, data):
     """Get the desired bin edges."""
