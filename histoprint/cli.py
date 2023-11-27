@@ -9,9 +9,10 @@ import numpy as np
 import histoprint as hp
 import histoprint.formatter as formatter
 
+
 def fieldprefixer_callback(ctx, param, fields):
-    if 'field_prefix' in ctx.params:
-        fields = map(lambda field: ctx.params['field_prefix'] + field, fields)
+    if "field_prefix" in ctx.params:
+        fields = map(lambda field: ctx.params["field_prefix"] + field, fields)
     return tuple(fields)
 
 
@@ -79,7 +80,7 @@ def fieldprefixer_callback(ctx, param, fields):
     "single TH1, or one or more paths to TTree branches. Also supports slicing "
     "of array-like branches, e.g. use 'tree/branch[:,2]' to histogram the 3rd "
     "elements of a vector-like branch.",
-    callback=fieldprefixer_callback
+    callback=fieldprefixer_callback,
 )
 @click.option(
     "--field-prefix",
@@ -163,6 +164,7 @@ def histoprint(infile, **kwargs):
 
     click.echo("Could not interpret file format.", err=True)
     exit(1)
+
 
 def _bin_edges(kwargs, data):
     """Get the desired bin edges."""
