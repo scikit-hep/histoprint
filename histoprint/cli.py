@@ -87,9 +87,8 @@ def fieldprefixer_callback(ctx, param, fields):
     "field_prefix",
     type=str,
     multiple=False,
-    help="String to prepend to each argument passed to --field option following --field-prefix"
-    "\nE.g. `histoprint -f Muon_eta --field-prefix Tau_ -f eta -f phi` ... would refer to fields"
-    "\n\t`Muon_eta`, `Tau_eta` and `Tau_phi`'",
+    help="String to prepend to all values indicated with --field option, "
+    "ignores position where this and --field options are specified.",
 )
 @click.option(
     "-C",

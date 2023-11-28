@@ -3,7 +3,9 @@ import io
 import numpy as np
 import pytest
 from uhi.numpy_plottable import ensure_plottable_histogram
+from click.testing import CliRunner
 
+from histoprint.cli import histoprint as cli
 import histoprint as hp
 
 
@@ -183,16 +185,12 @@ def test_rich_histogram():
     rich.print(tab)
 
 
-def cli_prefix_equivalence_test():
-    """
-    verify that the --field-prefix behaves exactly as if
-    using full name of field in --field
-    """
-    from click.testing import CliRunner
-
-    from histoprint.cli import histoprint as cli
+def test_cli_opt_field_prefix():
+    """Test equivalence of --field-prefix cli option to explicit prepend on --field."""
 
     runner = CliRunner()
+
+    # tests for fields "two" and "three" since share prefix of "t"
     res = runner.invoke(
         cli,
         [
@@ -204,8 +202,6 @@ def cli_prefix_equivalence_test():
             "three",
         ],
     )
-    assert res.exit_code == 0
-
     res_prefixed = runner.invoke(
         cli,
         [
@@ -213,13 +209,14 @@ def cli_prefix_equivalence_test():
             "tests/data/histograms.root",
             "-f",
             "wo",
-            "--field-prefix",
-            "t",
             "-f",
             "hree",
+            "--field-prefix",
+            "t",
         ],
     )
-    assert res_prefixed.exit_code == 0
 
-    # assert equivalent output
+    # assert succesful equivalent output
+    assert res.exit_code == 0
+    assert res_prefixed.exit_code == 0
     assert res.output == res_prefixed.output
