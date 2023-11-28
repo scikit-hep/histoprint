@@ -2,11 +2,11 @@ import io
 
 import numpy as np
 import pytest
-from uhi.numpy_plottable import ensure_plottable_histogram
 from click.testing import CliRunner
+from uhi.numpy_plottable import ensure_plottable_histogram
 
-from histoprint.cli import histoprint as cli
 import histoprint as hp
+from histoprint.cli import histoprint as cli
 
 
 def test_hist():
