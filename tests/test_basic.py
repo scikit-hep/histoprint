@@ -182,28 +182,43 @@ def test_rich_histogram():
 
     rich.print(tab)
 
+
 def cli_prefix_equivalence_test():
     """
     verify that the --field-prefix behaves exactly as if
     using full name of field in --field
     """
     from click.testing import CliRunner
+
     from histoprint.cli import histoprint as cli
 
     runner = CliRunner()
-    res = runner.invoke(cli, [
-                        "-s", "tests/data/histograms.root",
-                        "-f", "two",
-                        "-f", "three",
-                        ])
+    res = runner.invoke(
+        cli,
+        [
+            "-s",
+            "tests/data/histograms.root",
+            "-f",
+            "two",
+            "-f",
+            "three",
+        ],
+    )
     assert res.exit_code == 0
 
-    res_prefixed = runner.invoke(cli, [
-                        "-s", "tests/data/histograms.root",
-                        "-f", "wo",
-                        "--field-prefix", "t",
-                        "-f", "hree",
-                        ])
+    res_prefixed = runner.invoke(
+        cli,
+        [
+            "-s",
+            "tests/data/histograms.root",
+            "-f",
+            "wo",
+            "--field-prefix",
+            "t",
+            "-f",
+            "hree",
+        ],
+    )
     assert res_prefixed.exit_code == 0
 
     # assert equivalent output
