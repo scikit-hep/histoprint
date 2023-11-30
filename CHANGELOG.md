@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- add support for --field-prefix option at cli
+
 ## [2.4.0]
 
-### Addded
+### Added
 - RichHistogram class for use with the `rich` package.
 - Argument to set maximum count in bins for plotting.
 

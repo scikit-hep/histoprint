@@ -190,29 +190,28 @@ def test_cli_opt_field_prefix():
 
     runner = CliRunner()
 
-    # tests for fields "two" and "three" since share prefix of "t"
     res = runner.invoke(
         cli,
         [
             "-s",
-            "tests/data/histograms.root",
+            "tests/data/2D-prefixable.csv",
             "-f",
-            "two",
+            "Txx",
             "-f",
-            "three",
+            "Txy",
         ],
     )
     res_prefixed = runner.invoke(
         cli,
         [
             "-s",
-            "tests/data/histograms.root",
+            "tests/data/2D-prefixable.csv",
             "-f",
-            "wo",
+            "x",
             "-f",
-            "hree",
+            "y",
             "--field-prefix",
-            "t",
+            "Tx",
         ],
     )
 
