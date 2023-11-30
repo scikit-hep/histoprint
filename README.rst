@@ -179,6 +179,12 @@ It can read in files or take data directly from STDIN::
                                       'tree/branch[:,2]' to histogram the 3rd
                                       elements of a vector-like branch.
 
+      --field-prefix TEXT             String to prepend to each argument passed to
+                                      --field option following --field-prefix E.g.
+                                      'histoprint -f Muon_eta --field-prefix Tau_
+                                      -f eta -f phi' ... would refer to fields
+                                      'Muon_eta', 'Tau_eta' and 'Tau_phi''
+
       -C, --cut TEXT                  Filter the data to be plotted by a cut
                                       condition. For ROOT files, variables must be
                                       referenced by their branch name within the
