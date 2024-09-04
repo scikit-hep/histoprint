@@ -5,12 +5,12 @@ ci:
 
 repos:
 - repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 24.8.0
+  rev: 24
   hooks:
   - id: black
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v4
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -24,30 +24,30 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/PyCQA/isort
-  rev: 5.13.2
+  rev: 5
   hooks:
   - id: isort
 
 - repo: https://github.com/asottile/setup-cfg-fmt
-  rev: v2.5.0
+  rev: v2
   hooks:
   - id: setup-cfg-fmt
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.17.0
+  rev: v3
   hooks:
   - id: pyupgrade
     args: ["--py36-plus"]
 
 - repo: https://github.com/pycqa/flake8
-  rev: 7.1.1
+  rev: 7
   hooks:
   - id: flake8
     exclude: docs/conf.py
     additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.11.2
+  rev: v1
   hooks:
   - id: mypy
     files: histoprint
@@ -55,7 +55,7 @@ repos:
     additional_dependencies: [numpy, types-click, uhi, rich]
 
 - repo: https://github.com/mgedmin/check-manifest
-  rev: "0.49"
+  rev: "0"
   hooks:
   - id: check-manifest
     stages: [manual]
