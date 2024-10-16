@@ -2,9 +2,11 @@ import io
 
 import numpy as np
 import pytest
+from click.testing import CliRunner
 from uhi.numpy_plottable import ensure_plottable_histogram
 
 import histoprint as hp
+from histoprint.cli import histoprint as cli
 
 
 def test_hist():
@@ -181,3 +183,39 @@ def test_rich_histogram():
     tab.add_row(hist, Align.center(hist), Align.right(hist))
 
     rich.print(tab)
+
+
+def test_cli_opt_field_prefix():
+    """Test equivalence of --field-prefix cli option to explicit prepend on --field."""
+
+    runner = CliRunner()
+
+    res = runner.invoke(
+        cli,
+        [
+            "-s",
+            "tests/data/2D-prefixable.csv",
+            "-f",
+            "Txx",
+            "-f",
+            "Txy",
+        ],
+    )
+    res_prefixed = runner.invoke(
+        cli,
+        [
+            "-s",
+            "tests/data/2D-prefixable.csv",
+            "-f",
+            "x",
+            "-f",
+            "y",
+            "--field-prefix",
+            "Tx",
+        ],
+    )
+
+    # assert succesful equivalent output
+    assert res.exit_code == 0
+    assert res_prefixed.exit_code == 0
+    assert res.output == res_prefixed.output

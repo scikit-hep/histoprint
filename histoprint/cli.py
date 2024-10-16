@@ -76,6 +76,14 @@ import histoprint.formatter as formatter
     "elements of a vector-like branch.",
 )
 @click.option(
+    "--field-prefix",
+    "field_prefix",
+    type=str,
+    multiple=False,
+    help="String to prepend to all values indicated with --field option, "
+    "ignores position where this and --field options are specified.",
+)
+@click.option(
     "-C",
     "--cut",
     "cut",
@@ -109,6 +117,8 @@ def histoprint(infile, **kwargs):
 
     INFILE can be '-', in which case the data is read from STDIN.
     """
+    if (prefix := kwargs.pop("field_prefix", None)) is not None:
+        kwargs["fields"] = map(lambda s: prefix + s, kwargs["fields"])
 
     # Read file into buffer for use by implementations
     try:

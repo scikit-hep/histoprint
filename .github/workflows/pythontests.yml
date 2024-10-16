@@ -40,6 +40,7 @@ jobs:
         wget --quiet http://scikit-hep.org/uproot3/examples/Event.root
         histoprint -s Event.root -f T/event/fTracks/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast[:,0]
         histoprint -s Event.root -f T/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast[:,0] -C 'fNtrack > 5'
+        histoprint -s Event.root --field-prefix T/event/fTracks/fTracks. -f fYfirst -f fYlast[:,0]
         histoprint -s Event.root -f htime
 
   pre-commit:
