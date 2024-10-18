@@ -1,5 +1,6 @@
 """Module containing the CLI programs for histoprint."""
 
+import contextlib
 from io import StringIO
 from typing import Any, Dict, List, Tuple
 
@@ -43,22 +44,19 @@ import histoprint.formatter as formatter
     "--symbols",
     type=str,
     default=formatter.DEFAULT_SYMBOLS,
-    help="Symbol cycle for multiple histograms. Choices & default: '%s'"
-    % (formatter.DEFAULT_SYMBOLS,),
+    help=f"Symbol cycle for multiple histograms. Choices & default: '{formatter.DEFAULT_SYMBOLS}'",
 )
 @click.option(
     "--fg-colors",
     type=str,
     default=formatter.DEFAULT_FG_COLORS,
-    help="Colour cycle for foreground colours. Default: '%s', Choices: '0rgbcmykwRGBCMYKW'"
-    % (formatter.DEFAULT_FG_COLORS,),
+    help=f"Colour cycle for foreground colours. Default: '{formatter.DEFAULT_FG_COLORS}', Choices: '0rgbcmykwRGBCMYKW'",
 )
 @click.option(
     "--bg-colors",
     type=str,
     default=formatter.DEFAULT_BG_COLORS,
-    help="Colour cycle for background colours. Default: '%s', Choices: '0rgbcmykwRGBCMYKW'"
-    % (formatter.DEFAULT_BG_COLORS,),
+    help=f"Colour cycle for background colours. Default: '{formatter.DEFAULT_BG_COLORS}', Choices: '0rgbcmykwRGBCMYKW'",
 )
 @click.option(
     "-f",
@@ -316,19 +314,14 @@ def _histoprint_root(infile, **kwargs):
                 branch = branch[key]
             except KeyError:
                 click.echo(
-                    "Could not find key '%s'. Possible values: %s"
-                    % (key, branch.keys()),
+                    f"Could not find key '{key}'. Possible values: {branch.keys()}",
                     err=True,
                 )
                 exit(1)
             # Has `arrays` method?
-            try:
-                branch.arrays
-            except AttributeError:
-                pass
-            else:
+            if hasattr(branch, "arrays"):
                 # Found it
-                path = "/".join(splitfield[i + 1 :])
+                path = "/".join(splitfield[i + 1:])
                 if branch in trees:
                     tree_fields[trees.index(branch)].append(
                         {"label": label, "path": path}
@@ -349,17 +342,14 @@ def _histoprint_root(infile, **kwargs):
             labels.append(field["label"])
             split = field["path"].split("[")
             path = split[0]
-            if len(split) > 1:
-                slic = "[" + "[".join(split[1:])
-            else:
-                slic = ""
+            slic = "[" + "[".join(split[1:]) if len(split) > 1 else ""
             aliases[field["label"]] = path
             # Get the branches
             try:
                 d.append(eval("tree[path].array()" + slic))
             except up.KeyInFileError as e:
                 click.echo(e, err=True)
-                click.echo("Possible keys: %s" % tree.keys(), err=True)
+                click.echo(f"Possible keys: {tree.keys()}", err=True)
                 exit(1)
 
         # Cut on values
@@ -368,7 +358,7 @@ def _histoprint_root(infile, **kwargs):
                 index = tree.arrays("cut", aliases={"cut": cut}).cut
             except up.KeyInFileError as e:
                 click.echo(e, err=True)
-                click.echo("Possible keys: %s" % tree.keys(), err=True)
+                click.echo(f"Possible keys: {tree.keys()}", err=True)
                 exit(1)
             except Exception as e:
                 click.echo("Error interpreting the cut string:", err=True)
@@ -380,10 +370,8 @@ def _histoprint_root(infile, **kwargs):
 
         # Flatten if necessary
         for i in range(len(d)):
-            try:
+            with contextlib.suppress(ValueError):
                 d[i] = ak.flatten(d[i])
-            except ValueError:
-                pass
 
             # Turn into flat numpy array
             d[i] = ak.to_numpy(d[i])

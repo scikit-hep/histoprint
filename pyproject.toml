@@ -16,20 +16,19 @@ testpaths = [
     "tests",
 ]
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-
 [tool.check-manifest]
 ignore = [
     ".pre-commit-config.yaml",
     "histoprint/version.py",
     "noxfile.py",
+    ".flake8",
 ]
 
 [tool.mypy]
 files = ["histoprint"]
-python_version = "3.6"
+python_version = "3.8"
+show_error_codes = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unused_configs = true
 check_untyped_defs = true
 
@@ -41,3 +40,43 @@ module = [
     "awkward",
 ]
 ignore_missing_imports = true
+
+
+[tool.ruff]
+lint.select = [
+  "E", "F", "W", # flake8
+  "B",           # flake8-bugbear
+  "I",           # isort
+  "ARG",         # flake8-unused-arguments
+  "C4",          # flake8-comprehensions
+  "EM",          # flake8-errmsg
+  "ICN",         # flake8-import-conventions
+  "ISC",         # flake8-implicit-str-concat
+  "G",           # flake8-logging-format
+  "PGH",         # pygrep-hooks
+  "PIE",         # flake8-pie
+  "PL",          # pylint
+  "PT",          # flake8-pytest-style
+  "PTH",         # flake8-use-pathlib
+  "RET",         # flake8-return
+  "RUF",         # Ruff-specific
+  "SIM",         # flake8-simplify
+  "T20",         # flake8-print
+  "UP",          # pyupgrade
+  "YTT",         # flake8-2020
+  "EXE",         # flake8-executable
+  "NPY",         # NumPy specific rules
+  "PD",          # pandas-vet
+]
+lint.extend-ignore = [
+  "PLR",    # Design related pylint codes
+  "E501",   # Line too long
+]
+target-version = "py37"
+lint.unfixable = [
+  "T20",  # Removes print statements
+  "F841", # Removes unused variables
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["T20", "NPY002"]

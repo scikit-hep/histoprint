@@ -3,12 +3,12 @@ ci:
     # Is still tested in the GitHub CI, so save to just disable here
     skip: [mypy]
 
-repos:
-- repo: https://github.com/psf/black-pre-commit-mirror
-  rev: "24.10.0"
-  hooks:
-  - id: black
+default_language_version:
+    # force all unspecified python hooks to run python3.9
+    # Latest version that can easily be isntalled on Ubuntu 20.04 LTS
+    python: python3.9
 
+repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: "v5.0.0"
   hooks:
@@ -27,9 +27,21 @@ repos:
   rev: "5.13.2"
   hooks:
   - id: isort
+    name: isort (python)
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: "v0.7.0"
+  hooks:
+  - id: ruff
+    args: [--fix, --show-fixes]
+
+- repo: https://github.com/pre-commit/pygrep-hooks
+  rev: v1.10.0
+  hooks:
+  - id: python-use-type-annotations
 
 - repo: https://github.com/asottile/setup-cfg-fmt
-  rev: "v2.7.0"
+  rev: "v2.6.0"
   hooks:
   - id: setup-cfg-fmt
 
@@ -43,7 +55,7 @@ repos:
   rev: "7.1.1"
   hooks:
   - id: flake8
-    exclude: docs/conf.py
+    exclude: (docs/conf.py)|(tests/.*)
     additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/mirrors-mypy

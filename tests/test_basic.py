@@ -1,3 +1,4 @@
+import contextlib
 import io
 
 import numpy as np
@@ -56,7 +57,7 @@ def test_width():
     hist = np.histogram(np.random.randn(100) / 1000)
     f = io.StringIO()
     hp.print_hist(hist, file=f, columns=30, use_color=False)
-    f.flush
+    f.flush()
     f.seek(0)
     n_max = 0
     for line in f:
@@ -68,7 +69,7 @@ def test_width():
     hist = (np.array((100.5, 17.5)), np.array((0, 1, 2)))
     f = io.StringIO()
     hp.print_hist(hist, file=f, columns=30, use_color=False)
-    f.flush
+    f.flush()
     f.seek(0)
     n_max = 0
     for line in f:
@@ -106,11 +107,9 @@ def test_uproot():
     with uproot.open("tests/data/histograms.root") as F:
         hist = F["one"]
 
-    try:
+    with contextlib.suppress(Exception):
         # Works with uproot 3
         hist.show()
-    except Exception:
-        pass
     hp.print_hist(hist, title="uproot TH1")
 
 
