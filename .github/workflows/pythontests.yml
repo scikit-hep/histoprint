@@ -22,10 +22,10 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v3
     - name: Install dependencies
-      run: python -m pip install -e .[test,boost,uproot,rich]
-    - name: Install optional dependencies for tests
-      run: python -m pip install pandas
+      run: uv pip install --system -e .[test,boost,uproot,rich] pandas
     - name: Run tests
       run: python -m pytest -s
     - name: Run CLI
