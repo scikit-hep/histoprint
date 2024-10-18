@@ -21,6 +21,7 @@ ignore = [
     ".pre-commit-config.yaml",
     "histoprint/version.py",
     "noxfile.py",
+    ".flake8",
 ]
 
 [tool.mypy]

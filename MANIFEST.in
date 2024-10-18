@@ -6,4 +6,3 @@ recursive-include tests *.csv
 recursive-include tests *.py
 recursive-include tests *.root
 recursive-include tests *.txt
-ignore .flake8
