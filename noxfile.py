@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import nox
 
-ALL_PYTHONS = ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+nox.needs_version = ">=2024.4.15"
+nox.options.default_venv_backend = "uv|virtualenv"
 
-nox.options.sessions = ["lint", "tests"]
+ALL_PYTHONS = [
+    c.split()[-1]
+    for c in nox.project.load_toml("pyproject.toml")["project"]["classifiers"]
+    if c.startswith("Programming Language :: Python :: 3.")
+]
 
 
 @nox.session
@@ -16,7 +21,7 @@ def lint(session):
     session.run("pre-commit", "run", "--all-files", *session.posargs)
 
 
-@nox.session(python=ALL_PYTHONS, reuse_venv=True)
+@nox.session(python=ALL_PYTHONS)
 def tests(session):
     """
     Run the unit and regular tests.
@@ -25,7 +30,7 @@ def tests(session):
     session.run("pytest", "-s", *session.posargs)
 
 
-@nox.session
+@nox.session(default=False)
 def build(session):
     """
     Build an SDist and wheel.

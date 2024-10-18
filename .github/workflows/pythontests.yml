@@ -7,15 +7,14 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
 
 jobs:
   test:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v3
@@ -23,10 +22,10 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Setup uv
+      uses: astral-sh/setup-uv@v3
     - name: Install dependencies
-      run: python -m pip install -e .[test,boost,uproot,rich]
-    - name: Install optional dependencies for tests
-      run: python -m pip install pandas
+      run: uv pip install --system -e .[test,boost,uproot,rich] pandas
     - name: Run tests
       run: python -m pytest -s
     - name: Run CLI
@@ -50,7 +49,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v3
       with:
-        python-version: '3.9'
+        python-version: '3.x'
     - uses: pre-commit/action@v2.0.2
       with:
         extra_args: --all-files --hook-stage manual
