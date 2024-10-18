@@ -3,14 +3,14 @@ ci:
     # Is still tested in the GitHub CI, so save to just disable here
     skip: [mypy]
 
-repos:
-- repo: https://github.com/psf/black
-  rev: 23.3.0
-  hooks:
-  - id: black
+default_language_version:
+    # force all unspecified python hooks to run python3.9
+    # Latest version that can easily be isntalled on Ubuntu 20.04 LTS
+    python: python3.9
 
+repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: "v5.0.0"
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -22,6 +22,12 @@ repos:
   - id: mixed-line-ending
   - id: requirements-txt-fixer
   - id: trailing-whitespace
+
+- repo: https://github.com/PyCQA/isort
+  rev: "5.13.2"
+  hooks:
+  - id: isort
+    name: isort (python)
 
 - repo: https://github.com/charliermarsh/ruff-pre-commit
   rev: "v0.0.262"
@@ -35,12 +41,25 @@ repos:
   - id: python-use-type-annotations
 
 - repo: https://github.com/asottile/setup-cfg-fmt
-  rev: v2.2.0
+  rev: "v2.6.0"
   hooks:
   - id: setup-cfg-fmt
 
+- repo: https://github.com/asottile/pyupgrade
+  rev: "v3.18.0"
+  hooks:
+  - id: pyupgrade
+    args: ["--py36-plus"]
+
+- repo: https://github.com/pycqa/flake8
+  rev: "7.1.1"
+  hooks:
+  - id: flake8
+    exclude: docs/conf.py
+    additional_dependencies: [flake8-bugbear, flake8-print]
+
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.2.0
+  rev: "v1.11.2"
   hooks:
   - id: mypy
     files: histoprint
@@ -48,7 +67,7 @@ repos:
     additional_dependencies: [numpy, types-click, uhi, rich]
 
 - repo: https://github.com/mgedmin/check-manifest
-  rev: "0.49"
+  rev: "0.50"
   hooks:
   - id: check-manifest
     stages: [manual]
