@@ -106,7 +106,7 @@ class Hixel:
         subs = {
             "|": "\u2502",
             "=": "\u2550",
-            "#": "\u256A",
+            "#": "\u256a",
             "\\": "\u20e5",
             "/": "\u20eb",
             "X": "\u20e5\u20eb",
@@ -293,18 +293,17 @@ class BinFormatter:
                             Hixel(s, fg, bg, self.use_color, self.compose)
                             for _ in range(h)
                         ]
+                    # Overlay histograms
+                    elif h > len(line):
+                        for hix in line:
+                            hix.add(s, fg, bg)
+                        line += [
+                            Hixel(s, fg, bg, self.use_color, self.compose)
+                            for _ in range(h - len(line))
+                        ]
                     else:
-                        # Overlay histograms
-                        if h > len(line):
-                            for hix in line:
-                                hix.add(s, fg, bg)
-                            line += [
-                                Hixel(s, fg, bg, self.use_color, self.compose)
-                                for _ in range(h - len(line))
-                            ]
-                        else:
-                            for hix in line[:h]:
-                                hix.add(s, fg, bg)
+                        for hix in line[:h]:
+                            hix.add(s, fg, bg)
 
             for hix in line:
                 bin_string += hix.render()
@@ -527,7 +526,7 @@ class HistFormatter:
         # Second line: Total
         summary += " " * pad + "Tot:"
         for c, w in zip(counts, label_widths):
-            tot = np.sum(c)
+            tot = float(np.sum(c))
             summary += f" {tot: .2e}" + " " * (w - 10)
         summary += "\n"
 
@@ -535,7 +534,7 @@ class HistFormatter:
         summary += " " * pad + "Avg:"
         for c, w in zip(counts, label_widths):
             try:
-                average = np.average(bin_values, weights=c)
+                average = float(np.average(bin_values, weights=c))
             except ZeroDivisionError:
                 average = np.nan
             summary += f" {average: .2e}" + " " * (w - 10)
@@ -545,7 +544,7 @@ class HistFormatter:
         summary += " " * pad + "Std:"
         for c, w in zip(counts, label_widths):
             try:
-                average = np.average(bin_values, weights=c)
+                average = float(np.average(bin_values, weights=c))
                 std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
             except ZeroDivisionError:
                 std = np.nan

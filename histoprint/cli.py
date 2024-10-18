@@ -8,7 +8,7 @@ import click
 import numpy as np
 
 import histoprint as hp
-import histoprint.formatter as formatter
+from histoprint import formatter
 
 
 @click.command()
@@ -124,7 +124,7 @@ def histoprint(infile, **kwargs):
         try:
             data_handle.seek(0)
             _histoprint_txt(data_handle, **kwargs)
-            exit(0)
+            return
         except ValueError:
             pass
 
@@ -132,19 +132,18 @@ def histoprint(infile, **kwargs):
         try:
             data_handle.seek(0)
             _histoprint_csv(data_handle, **kwargs)
-            exit(0)
+            raise SystemExit(0)
         except ImportError:
             click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
 
     # Try to interpret file as ROOT file
     try:
         _histoprint_root(infile, **kwargs)
-        exit(0)
+        return
     except ImportError:
         pass
 
-    click.echo("Could not interpret file format.", err=True)
-    exit(1)
+    raise click.FileError(infile, "Could not interpret the file format")
 
 
 def _bin_edges(kwargs, data):
@@ -180,7 +179,7 @@ def _histoprint_txt(infile, **kwargs):
         except Exception as e:
             click.echo("Error interpreting the cut string:", err=True)
             click.echo(e, err=True)
-            exit(1)
+            raise SystemExit(1) from None
 
     # Interpret field numbers
     fields = kwargs.pop("fields", [])
@@ -189,12 +188,12 @@ def _histoprint_txt(infile, **kwargs):
             fields = [int(f) for f in fields]
         except ValueError:
             click.echo("Fields for a TXT file must be integers.", err=True)
-            exit(1)
+            raise SystemExit(1) from None
         try:
             data = data[fields]
         except KeyError:
             click.echo("Field out of bounds.", err=True)
-            exit(1)
+            raise SystemExit(1) from None
 
     # Interpret bins
     bins = _bin_edges(kwargs, data)
@@ -222,7 +221,7 @@ def _histoprint_csv(infile, **kwargs):
         except Exception as e:
             click.echo("Error interpreting the cut string:", err=True)
             click.echo(e, err=True)
-            exit(1)
+            raise SystemExit(1) from None
 
     # Interpret field numbers/names
     fields = list(kwargs.pop("fields", []))
@@ -231,7 +230,7 @@ def _histoprint_csv(infile, **kwargs):
             data = data[fields]
         except KeyError:
             click.echo("Unknown column name.", err=True)
-            exit(1)
+            raise SystemExit(1) from None
 
     # Get default columns labels
     if kwargs.get("labels", ("",)) == ("",):
@@ -276,7 +275,7 @@ def _histoprint_root(infile, **kwargs):
     if len(fields) == 0:
         click.echo("Must specify at least one field for ROOT files.", err=True)
         click.echo(F.keys(), err=True)
-        exit(1)
+        raise SystemExit(1)
 
     # Get default columns labels
     if kwargs.get("labels", ("",)) == ("",):
@@ -317,11 +316,11 @@ def _histoprint_root(infile, **kwargs):
                     f"Could not find key '{key}'. Possible values: {branch.keys()}",
                     err=True,
                 )
-                exit(1)
+                raise SystemExit(1) from None
             # Has `arrays` method?
             if hasattr(branch, "arrays"):
                 # Found it
-                path = "/".join(splitfield[i + 1:])
+                path = "/".join(splitfield[i + 1 :])
                 if branch in trees:
                     tree_fields[trees.index(branch)].append(
                         {"label": label, "path": path}
@@ -350,7 +349,7 @@ def _histoprint_root(infile, **kwargs):
             except up.KeyInFileError as e:
                 click.echo(e, err=True)
                 click.echo(f"Possible keys: {tree.keys()}", err=True)
-                exit(1)
+                raise SystemExit(1) from None
 
         # Cut on values
         if cut is not None:
@@ -359,11 +358,11 @@ def _histoprint_root(infile, **kwargs):
             except up.KeyInFileError as e:
                 click.echo(e, err=True)
                 click.echo(f"Possible keys: {tree.keys()}", err=True)
-                exit(1)
+                raise SystemExit(1) from None
             except Exception as e:
                 click.echo("Error interpreting the cut string:", err=True)
                 click.echo(e, err=True)
-                exit(1)
+                raise SystemExit(1) from None
 
             for i in range(len(d)):
                 d[i] = d[i][index]

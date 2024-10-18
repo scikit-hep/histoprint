@@ -1,13 +1,67 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "setuptools_scm[toml]>=3.4",
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "histoprint"
+dynamic = ["version"]
+description = "Pretty print of NumPy (and other) histograms to the console"
+readme = "README.rst"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "Lukas Koch", email = "lukas.koch@mailbox.org" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "click>=7.0.0",
+    "numpy",
+    "uhi>=0.2.1",
 ]
 
-build-backend = "setuptools.build_meta"
+[project.optional-dependencies]
+boost = [
+    "boost-histogram>=1.1",
+]
+rich = [
+    "rich>=12",
+]
+test = [
+    "pytest>=6.0",
+]
+uproot = [
+    "awkward>=1",
+    "uproot>=4",
+]
+
+[project.scripts]
+histoprint = "histoprint.cli:histoprint"
+
+[project.urls]
+Homepage = "https://github.com/scikit-hep/histoprint"
+
+
+[tool.hatch]
+version.source = "vcs"
+build.hooks.vcs.version-file = "histoprint/version.py"
 
 [tool.setuptools_scm]
 write_to = "histoprint/version.py"
+
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -16,13 +70,6 @@ testpaths = [
     "tests",
 ]
 
-[tool.check-manifest]
-ignore = [
-    ".pre-commit-config.yaml",
-    "histoprint/version.py",
-    "noxfile.py",
-    ".flake8",
-]
 
 [tool.mypy]
 files = ["histoprint"]
@@ -34,7 +81,6 @@ check_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = [
-    "histoprint.version",
     "pandas",
     "uproot",
     "awkward",
@@ -43,8 +89,7 @@ ignore_missing_imports = true
 
 
 [tool.ruff]
-lint.select = [
-  "E", "F", "W", # flake8
+lint.extend-select = [
   "B",           # flake8-bugbear
   "I",           # isort
   "ARG",         # flake8-unused-arguments
@@ -68,14 +113,10 @@ lint.select = [
   "NPY",         # NumPy specific rules
   "PD",          # pandas-vet
 ]
-lint.extend-ignore = [
-  "PLR",    # Design related pylint codes
-  "E501",   # Line too long
-]
-target-version = "py37"
-lint.unfixable = [
-  "T20",  # Removes print statements
-  "F841", # Removes unused variables
+lint.ignore = [
+  "PLR09",    # Too many x
+  "PLR2004",  # Magic value in comparison
+  "ISC001",   # Conflicts with formatter
 ]
 
 [tool.ruff.lint.per-file-ignores]
