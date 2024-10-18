@@ -319,11 +319,7 @@ def _histoprint_root(infile, **kwargs):
                 )
                 exit(1)
             # Has `arrays` method?
-            try:
-                branch.arrays()
-            except AttributeError:
-                pass
-            else:
+            if hasattr(branch, "arrays"):
                 # Found it
                 path = "/".join(splitfield[i + 1:])
                 if branch in trees:
