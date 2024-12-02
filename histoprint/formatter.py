@@ -15,7 +15,7 @@ COMPOSING_SYMBOLS = "/\\"
 DEFAULT_FG_COLORS = "WWWWW"
 DEFAULT_BG_COLORS = "K0000"
 
-__all__ = ["print_hist", "text_hist", "HistFormatter"]
+__all__ = ["HistFormatter", "print_hist", "text_hist"]
 
 
 class Hixel:
