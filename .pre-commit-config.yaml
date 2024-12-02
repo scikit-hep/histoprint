@@ -30,7 +30,7 @@ repos:
     name: isort (python)
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: "v0.7.0"
+  rev: "v0.8.1"
   hooks:
   - id: ruff
     args: [--fix, --show-fixes]
@@ -41,12 +41,12 @@ repos:
   - id: python-use-type-annotations
 
 - repo: https://github.com/asottile/setup-cfg-fmt
-  rev: "v2.6.0"
+  rev: "v2.7.0"
   hooks:
   - id: setup-cfg-fmt
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: "v3.18.0"
+  rev: "v3.19.0"
   hooks:
   - id: pyupgrade
     args: ["--py36-plus"]
@@ -59,7 +59,7 @@ repos:
     additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: "v1.11.2"
+  rev: "v1.13.0"
   hooks:
   - id: mypy
     files: histoprint
