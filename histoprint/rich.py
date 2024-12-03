@@ -2,7 +2,7 @@
 
 from rich.text import Text
 
-import histoprint.formatter as formatter
+from histoprint import formatter
 
 __all__ = ["RichHistogram"]
 
