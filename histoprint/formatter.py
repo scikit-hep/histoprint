@@ -15,7 +15,7 @@ COMPOSING_SYMBOLS = "/\\"
 DEFAULT_FG_COLORS = "WWWWW"
 DEFAULT_BG_COLORS = "K0000"
 
-__all__ = ["print_hist", "text_hist", "HistFormatter"]
+__all__ = ["HistFormatter", "print_hist", "text_hist"]
 
 
 class Hixel:
@@ -149,7 +149,7 @@ class Hixel:
             fg = subs[fg]
             bg = subs[bg] + 10
 
-            ret += "\033[%d;%dm" % (fg, bg)
+            ret += f"\033[{fg:d};{bg:d}m"
         return ret
 
 
@@ -197,7 +197,7 @@ class BinFormatter:
         self,
         scale=1.0,
         count_area=True,
-        tick_format="% #7.3f ",
+        tick_format="{: #7.3f} ",
         tick_mark="_",
         no_tick_mark=" ",
         print_top_edge=False,
@@ -210,7 +210,7 @@ class BinFormatter:
         self.scale = scale
         self.count_area = count_area
         self.tick_format = tick_format
-        self.tick_format_width = len(tick_format % (0.0,))
+        self.tick_format_width = len(tick_format.format(0.0))
         self.tick_mark = tick_mark
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
@@ -315,7 +315,7 @@ class BinFormatter:
 
     def tick(self, edge):
         """Format the tick mark of a bin."""
-        return self.tick_format % (edge,) + self.tick_mark
+        return self.tick_format.format(edge) + self.tick_mark
 
     def no_tick(self):
         """Format the axis without a tick mark."""
@@ -456,7 +456,7 @@ class HistFormatter:
 
         # Write the title line
         if len(self.title):
-            hist_string += ("{: ^%ds}\n" % (self.columns,)).format(self.title)
+            hist_string += f"{self.title: ^{self.columns:d}s}\n"
 
         # Get bin edges
         top = np.array(self.edges[:-1])
@@ -468,16 +468,14 @@ class HistFormatter:
 
         # Write the first tick, common exponent and horizontal axis
         hist_string += self.bin_formatter.tick(top[0])
-        ce_string = " x 10^%+03d" % (common_exponent,) if common_exponent != 0 else ""
+        ce_string = f" x 10^{common_exponent:+03.0f}" if common_exponent != 0 else ""
 
         hist_string += ce_string
         if self.bin_formatter.count_area:
             longest_count = f"{max_c:g}/row"
         else:
             longest_count = f"{max_c:g}"
-        hist_string += ("{:>%ds} \u2577\n" % (hist_width - len(ce_string) - 2,)).format(
-            longest_count
-        )
+        hist_string += f"{longest_count:>{hist_width - len(ce_string) - 2:d}s} \u2577\n"
 
         # Write the bins
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
