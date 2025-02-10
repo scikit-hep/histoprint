@@ -560,9 +560,9 @@ def get_plottable_protocol_bin_edges(axis):
     """
 
     out = np.empty(len(axis) + 1)
-    assert isinstance(
-        axis[0], tuple
-    ), f"Currently only support non-discrete axes {axis}"
+    assert isinstance(axis[0], tuple), (
+        f"Currently only support non-discrete axes {axis}"
+    )
     # TODO: Support discreete axes
     out[0] = axis[0][0]
     out[1:] = [axis[i][1] for i in range(len(axis))]
