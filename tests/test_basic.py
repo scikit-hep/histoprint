@@ -150,7 +150,9 @@ def test_rich_histogram():
     """Test updating the values of a histogram object."""
     rich = pytest.importorskip("rich")
 
-    from histoprint.rich import RichHistogram
+    from histoprint.rich import (  # noqa: PLC0415 - Conditional import for optional rich support
+        RichHistogram,
+    )
 
     A = np.random.randn(1000) - 2
     B = np.random.randn(1000) + 2
@@ -168,14 +170,18 @@ def test_rich_histogram():
 
     rich.print(hist)
 
-    from rich.table import Table
+    from rich.table import (  # noqa: PLC0415 - Conditional import for optional rich support
+        Table,
+    )
 
     tab = Table(title="Test table")
     tab.add_column("left justify", justify="left", width=29)
     tab.add_column("center justify", justify="center", width=35)
     tab.add_column("right justify", justify="right", width=35)
 
-    from rich.align import Align
+    from rich.align import (  # noqa: PLC0415 - Conditional import for optional rich support
+        Align,
+    )
 
     tab.add_row(hist, Align.center(hist), Align.right(hist))
 

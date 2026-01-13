@@ -210,7 +210,7 @@ def _histoprint_txt(infile, **kwargs):
 def _histoprint_csv(infile, **kwargs):
     """Interpret file as as CSV file."""
 
-    import pandas as pd
+    import pandas as pd  # noqa: PLC0415 - Conditional import for optional CSV support
 
     # Read the data
     data = pd.read_csv(infile)
@@ -256,13 +256,13 @@ def _histoprint_root(infile, **kwargs):
 
     # Import uproot
     try:
-        import uproot as up
+        import uproot as up  # noqa: PLC0415 - Conditional import for optional ROOT support
     except ImportError:
         click.echo("Cannot try ROOT file format. Uproot module not found.", err=True)
         raise
     # Import awkward
     try:
-        import awkward as ak
+        import awkward as ak  # noqa: PLC0415 - Conditional import for optional ROOT support
     except ImportError:
         click.echo("Cannot try ROOT file format. Awkward module not found.", err=True)
         raise
@@ -384,9 +384,9 @@ def _histoprint_root(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist = ([], bins)
+    hist_data: Tuple[List[np.ndarray], np.ndarray] = ([], bins)
     for d in data:
-        hist[0].append(np.histogram(d, bins=bins)[0])
+        hist_data[0].append(np.histogram(d, bins=bins)[0])
 
     # Print the histogram
-    hp.print_hist(hist, **kwargs)
+    hp.print_hist(hist_data, **kwargs)
