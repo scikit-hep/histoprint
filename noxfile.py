@@ -2,14 +2,11 @@ from __future__ import annotations
 
 import nox
 
-nox.needs_version = ">=2024.4.15"
+nox.needs_version = ">=2025.02.09"
 nox.options.default_venv_backend = "uv|virtualenv"
 
-ALL_PYTHONS = [
-    c.split()[-1]
-    for c in nox.project.load_toml("pyproject.toml")["project"]["classifiers"]
-    if c.startswith("Programming Language :: Python :: 3.")
-]
+PYPROJECT = nox.project.load_toml("pyproject.toml")
+PYTHON_VERSIONS = nox.project.python_versions(PYPROJECT)
 
 
 @nox.session
@@ -17,16 +14,16 @@ def lint(session):
     """
     Run the linter.
     """
-    session.install("pre-commit")
-    session.run("pre-commit", "run", "--all-files", *session.posargs)
+    session.install("prek")
+    session.run("prek", "run", "--all-files", *session.posargs)
 
 
-@nox.session(python=ALL_PYTHONS)
+@nox.session(python=PYTHON_VERSIONS)
 def tests(session):
     """
     Run the unit and regular tests.
     """
-    session.install(".[test,boost,uproot,rich]")
+    session.install("-e.[boost,uproot,rich]", "--group=test")
     session.run("pytest", "-s", *session.posargs)
 
 
