@@ -2,7 +2,7 @@
 
 import contextlib
 from io import StringIO
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import click
 import numpy as np
@@ -199,7 +199,7 @@ def _histoprint_txt(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist: Tuple[Any, Any] = ([], bins)
+    hist: tuple[Any, Any] = ([], bins)
     for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
@@ -243,7 +243,7 @@ def _histoprint_csv(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist: Tuple[Any, Any] = ([], bins)
+    hist: tuple[Any, Any] = ([], bins)
     for d in data:
         hist[0].append(np.histogram(d, bins=bins)[0])
 
@@ -303,8 +303,8 @@ def _histoprint_root(infile, **kwargs):
 
     data = []
     # Find TTrees
-    trees: List[up.models.TTree.Model_TTree_v19] = []
-    tree_fields: List[List[Dict[str, Any]]] = []
+    trees: list[up.models.TTree.Model_TTree_v19] = []
+    tree_fields: list[list[dict[str, Any]]] = []
     for field, label in zip(fields, labels):
         branch = F
         splitfield = field.split("/")
@@ -384,7 +384,7 @@ def _histoprint_root(infile, **kwargs):
     bins = _bin_edges(kwargs, data)
 
     # Create the histogram(s)
-    hist_data: Tuple[List[np.ndarray], np.ndarray] = ([], bins)
+    hist_data: tuple[list[np.ndarray], np.ndarray] = ([], bins)
     for d in data:
         hist_data[0].append(np.histogram(d, bins=bins)[0])
 
