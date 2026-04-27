@@ -25,21 +25,21 @@ jobs:
     - name: Setup uv
       uses: astral-sh/setup-uv@v8.0.0
     - name: Install dependencies
-      run: uv pip install --system -e .[test,boost,uproot,rich] pandas
+      run: uv sync
     - name: Run tests
-      run: python -m pytest -s
+      run: uv run pytest -s
     - name: Run CLI
       run: |
-        histoprint tests/data/1D.txt
-        histoprint tests/data/1D.txt -c 40 -l 40
-        histoprint tests/data/2D.txt
-        histoprint tests/data/3D.txt -s -l A -l B -l C -t "HISTOPRINT"
-        histoprint tests/data/3D.txt -s -f 0 -l A -f 2 -l C -C 'data[1] > 2.'
-        histoprint tests/data/3D.csv -s -f x -f z -C 'y > 2.'
+        uv run histoprint tests/data/1D.txt
+        uv run histoprint tests/data/1D.txt -c 40 -l 40
+        uv run histoprint tests/data/2D.txt
+        uv run histoprint tests/data/3D.txt -s -l A -l B -l C -t "HISTOPRINT"
+        uv run histoprint tests/data/3D.txt -s -f 0 -l A -f 2 -l C -C 'data[1] > 2.'
+        uv run histoprint tests/data/3D.csv -s -f x -f z -C 'y > 2.'
         wget --quiet http://scikit-hep.org/uproot3/examples/Event.root
-        histoprint -s Event.root -f T/event/fTracks/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast[:,0]
-        histoprint -s Event.root -f T/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast[:,0] -C 'fNtrack > 5'
-        histoprint -s Event.root -f htime
+        uv run histoprint -s Event.root -f T/event/fTracks/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast[:,0]
+        uv run histoprint -s Event.root -f T/fTracks.fYfirst -f T/event/fTracks/fTracks.fYlast[:,0] -C 'fNtrack > 5'
+        uv run histoprint -s Event.root -f htime
 
   pre-commit:
 
