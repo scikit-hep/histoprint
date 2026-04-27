@@ -17,13 +17,13 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     - name: Setup uv
-      uses: astral-sh/setup-uv@v8.0.0
+      uses: astral-sh/setup-uv@v8.1.0
     - name: Install dependencies
       run: uv pip install --system -e .[test,boost,uproot,rich] pandas
     - name: Run tests
@@ -46,8 +46,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.x'
     - uses: pre-commit/action@v3.0.1
