@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
@@ -59,13 +60,11 @@ version.source = "vcs"
 build.hooks.vcs.version-file = "histoprint/version.py"
 
 
-[tool.setuptools_scm]
-write_to = "histoprint/version.py"
-
-
 [tool.uv]
-dev-dependencies = ["histoprint[boost,rich,test,uproot]", "pandas"]
 environments = ["python_version >= '3.11'"]
+
+[dependency-groups]
+dev = ["histoprint[boost,rich,test,uproot]", "pandas"]
 
 
 [tool.pytest.ini_options]
