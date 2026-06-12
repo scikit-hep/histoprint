@@ -124,7 +124,7 @@ class Hixel:
         ret = subs.get(char, char)
         # Characters can be displayed differently when they have a composing character on top.
         # This looks ugly if some Hixels of a histogram are covered by another and some are not.
-        # Unless explicitly asked for no compositio, if no composition is added,
+        # Unless explicitly asked for no composition, if no composition is added,
         # use empty composition character to make them all display the same.
         ret += subs.get(compose, "\u034f")
 
@@ -222,21 +222,12 @@ class BinFormatter:
         self.tick_mark = tick_mark
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
-        self.symbols = symbols
-        if self.symbols == "":
-            self.symbols = " "
-        self.fg_colors = fg_colors
-        if self.fg_colors == "":
-            self.fg_colors = "0"
-        self.bg_colors = bg_colors
-        if self.bg_colors == "":
-            self.bg_colors = "0"
+        self.symbols = symbols or " "
+        self.fg_colors = fg_colors or "0"
+        self.bg_colors = bg_colors or "0"
         self.stack = stack
         if use_color is None:
-            if any(c != "0" for c in fg_colors) or any(c != "0" for c in bg_colors):
-                self.use_color = True
-            else:
-                self.use_color = False
+            self.use_color = any(c != "0" for c in fg_colors + bg_colors)
         else:
             self.use_color = use_color
         self.compose: str | None = None
@@ -296,7 +287,7 @@ class BinFormatter:
             ):
                 if h:
                     if self.stack:
-                        # Just print them all afer one another
+                        # Just print them all after one another
                         line += [
                             Hixel(s, fg, bg, self.use_color, self.compose)
                             for _ in range(h)
@@ -331,13 +322,13 @@ class BinFormatter:
 
 
 class HistFormatter:
-    """Class that handles the formating of histograms.
+    """Class that handles the formatting of histograms.
 
     Parameters
     ----------
 
     lines, columns : int, optional
-        The number of lines and maximum numbre of columns of the output.
+        The number of lines and maximum number of columns of the output.
     count_area : bool, optional
         Whether the bin content is represented by the area or height of the bin.
     scale_bin_width : bool, optional
@@ -383,10 +374,10 @@ class HistFormatter:
         # Fit histograms into the terminal, unless otherwise specified
         term_size = shutil.get_terminal_size()
         if columns is None:
-            columns = term_size[0] - 1
+            columns = term_size.columns - 1
         if lines is None:
             # Try to keep a constant aspect ratio
-            lines = min(int(columns / 3.5) + 1, term_size[1] - 1)
+            lines = min(int(columns / 3.5) + 1, term_size.lines - 1)
         self.lines = lines
         self.columns = columns
         self.summary = summary
@@ -394,11 +385,10 @@ class HistFormatter:
         self.max_count = max_count
 
         self.hist_lines = lines - 1  # Less one line for the first tick
-        if len(self.title):
+        if self.title:
             # Make room for the title
             self.hist_lines -= 1
 
-        self.summary = summary
         if self.summary:
             # Make room for a summary at the bottom
             self.hist_lines -= 4
@@ -426,8 +416,8 @@ class HistFormatter:
     def format_histogram(self, counts):
         """Format (a set of) histogram counts.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
 
         counts : ndarray
             The histogram entries to be plotted.
