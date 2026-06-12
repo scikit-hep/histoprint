@@ -461,12 +461,9 @@ class HistFormatter:
         # Get bin edges
         top = np.array(self.edges[:-1])
         bottom = np.array(self.edges[1:])
-        # Calculate common exponent
-        max_edge = np.max(np.abs(self.edges))
-        if max_edge == 0:
-            common_exponent = 0.0
-        else:
-            common_exponent = np.floor(np.log10(max_edge))
+        # Calculate common exponent, guarding against all-zero edges
+        max_edge = float(np.max(np.abs(self.edges)))
+        common_exponent = 0.0 if max_edge == 0 else np.floor(np.log10(max_edge))
         top /= 10**common_exponent
         bottom /= 10**common_exponent
 
