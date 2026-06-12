@@ -35,7 +35,7 @@ class Hixel:
 
         allowed = r" =|\/"
         if char not in allowed:
-            msg = f"Symbol not one of the allowed: '{allowed!r}'"
+            msg = f"Symbol not one of the allowed: {allowed!r}"
             raise ValueError(msg)
 
         if fg == self.fg_color:
@@ -60,7 +60,12 @@ class Hixel:
             }
             if char in compose_chars:
                 if self.compose is not None:
-                    self.compose = compose_combinations.get((self.compose, char))
+                    # Fall back to the existing composing character (e.g. when
+                    # re-adding the same symbol, or composing onto an "X") so
+                    # the glyph is never erased.
+                    self.compose = compose_combinations.get(
+                        (self.compose, char), self.compose
+                    )
             else:
                 self.character = char_combinations.get((self.character, char), char)
         elif char != " ":
@@ -467,8 +472,12 @@ class HistFormatter:
         # Get bin edges
         top = np.array(self.edges[:-1])
         bottom = np.array(self.edges[1:])
-        # Caclucate common exponent
-        common_exponent = np.floor(np.log10(np.max(np.abs(self.edges))))
+        # Calculate common exponent
+        max_edge = np.max(np.abs(self.edges))
+        if max_edge == 0:
+            common_exponent = 0.0
+        else:
+            common_exponent = np.floor(np.log10(max_edge))
         top /= 10**common_exponent
         bottom /= 10**common_exponent
 
@@ -566,9 +575,9 @@ def get_plottable_protocol_bin_edges(axis):
     """
 
     out = np.empty(len(axis) + 1)
-    assert isinstance(axis[0], tuple), (
-        f"Currently only support non-discrete axes {axis}"
-    )
+    if not isinstance(axis[0], tuple):
+        msg = f"Currently only support non-discrete axes {axis}"
+        raise TypeError(msg)
     # TODO: Support discreete axes
     out[0] = axis[0][0]
     out[1:] = [axis[i][1] for i in range(len(axis))]
@@ -579,13 +588,19 @@ def get_count_edges(hist):
     """Get bin contents and edges from a compatible histogram."""
 
     # Support sequence of histograms
+    if isinstance(hist, Sequence) and len(hist) == 0:
+        msg = "Cannot plot an empty sequence of histograms"
+        raise ValueError(msg)
+
     if isinstance(hist, Sequence) and isinstance(hist[0], PlottableHistogram):
         count = np.stack([h.values() for h in hist])
         edges = get_plottable_protocol_bin_edges(hist[0].axes[0])
         for other_edges in (
             get_plottable_protocol_bin_edges(h.axes[0]) for h in hist[1:]
         ):
-            np.testing.assert_allclose(edges, other_edges)
+            if not np.allclose(edges, other_edges):
+                msg = "All histograms must share the same bin edges"
+                raise ValueError(msg)
 
     else:
         # Single histogram or (a,b,c, edges) tuple:
