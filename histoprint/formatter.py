@@ -276,15 +276,15 @@ class BinFormatter:
             self.compose = None
 
         # Format bin
-        bin_string = ""
+        bin_string = []
         for i_line in range(width):
             # Print axis
             if self.print_top_edge and i_line == 0:
-                bin_string += self.tick(top)
+                bin_string.append(self.tick(top))
             elif not self.print_top_edge and i_line == (width - 1):
-                bin_string += self.tick(bottom)
+                bin_string.append(self.tick(bottom))
             else:
-                bin_string += self.no_tick()
+                bin_string.append(self.no_tick())
 
             # Print symbols
             line = []
@@ -314,12 +314,12 @@ class BinFormatter:
                             hix.add(s, fg, bg)
 
             for hix in line:
-                bin_string += hix.render()
+                bin_string.append(hix.render())
 
             # New line
-            bin_string += "\n"
+            bin_string.append("\n")
 
-        return bin_string
+        return "".join(bin_string)
 
     def tick(self, edge):
         """Format the tick mark of a bin."""
@@ -462,11 +462,11 @@ class HistFormatter:
         symbol_scale = max_c / hist_width
         self.bin_formatter.scale = symbol_scale * 0.999  # <- avoid rounding issues
 
-        hist_string = ""
+        hist_string = []
 
         # Write the title line
-        if len(self.title):
-            hist_string += f"{self.title: ^{self.columns:d}s}\n"
+        if self.title:
+            hist_string.append(f"{self.title: ^{self.columns:d}s}\n")
 
         # Get bin edges
         top = np.array(self.edges[:-1])
@@ -481,37 +481,38 @@ class HistFormatter:
         bottom /= 10**common_exponent
 
         # Write the first tick, common exponent and horizontal axis
-        hist_string += self.bin_formatter.tick(top[0])
+        hist_string.append(self.bin_formatter.tick(top[0]))
         ce_string = f" x 10^{common_exponent:+03.0f}" if common_exponent != 0 else ""
 
-        hist_string += ce_string
+        hist_string.append(ce_string)
         if self.bin_formatter.count_area:
             longest_count = f"{max_c:g}/row"
         else:
             longest_count = f"{max_c:g}"
-        hist_string += f"{longest_count:>{hist_width - len(ce_string) - 2:d}s} \u2577\n"
+        hist_string.append(
+            f"{longest_count:>{hist_width - len(ce_string) - 2:d}s} \u2577\n"
+        )
 
         # Write the bins
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
-            hist_string += self.bin_formatter.format_bin(t, b, c, w)
+            hist_string.append(self.bin_formatter.format_bin(t, b, c, w))
 
         if self.summary:
-            hist_string += self.summarize(counts, top, bottom)
+            hist_string.append(self.summarize(counts, top, bottom))
         elif any(len(lab) > 0 for lab in self.labels):
-            hist_string += self.summarize(counts, top, bottom, legend_only=True)
+            hist_string.append(self.summarize(counts, top, bottom, legend_only=True))
 
-        return hist_string
+        return "".join(hist_string)
 
     def summarize(self, counts, top, bottom, legend_only=False):
         """Calculate some summary statistics."""
 
-        summary = ""
         bin_values = (top + bottom) / 2
 
         label_widths = []
 
         # First line: symbol, label
-        summary += "     "
+        first_line = ["     "]
         for _, lab, s, fg, bg in zip(
             counts,
             cycle(self.labels),
@@ -521,49 +522,47 @@ class HistFormatter:
         ):
             # Pad label to make room for numbers below
             pad_lab = f"{lab:<9}"
-            label = " "
-            label += Hixel(
+            hixel = Hixel(
                 s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose
             ).render()
-            label += " " + pad_lab
+            first_line.append(f" {hixel} {pad_lab}")
             label_widths.append(3 + len(pad_lab))
-            summary += label
         pad = max(self.columns - (5 + np.sum(label_widths)), 0) // 2
-        summary = " " * pad + summary
-        summary += "\n"
+
+        summary = [" " * pad, *first_line, "\n"]
 
         if legend_only:
-            return summary
+            return "".join(summary)
 
         # Second line: Total
-        summary += " " * pad + "Tot:"
+        summary.append(" " * pad + "Tot:")
         for c, w in zip(counts, label_widths):
             tot = float(np.sum(c))
-            summary += f" {tot: .2e}" + " " * (w - 10)
-        summary += "\n"
+            summary.append(f" {tot: .2e}" + " " * (w - 10))
+        summary.append("\n")
 
         # Third line: Average
-        summary += " " * pad + "Avg:"
+        summary.append(" " * pad + "Avg:")
         for c, w in zip(counts, label_widths):
             try:
                 average = float(np.average(bin_values, weights=c))
             except ZeroDivisionError:
                 average = np.nan
-            summary += f" {average: .2e}" + " " * (w - 10)
-        summary += "\n"
+            summary.append(f" {average: .2e}" + " " * (w - 10))
+        summary.append("\n")
 
         # Fourth line: std
-        summary += " " * pad + "Std:"
+        summary.append(" " * pad + "Std:")
         for c, w in zip(counts, label_widths):
             try:
                 average = float(np.average(bin_values, weights=c))
                 std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
             except ZeroDivisionError:
                 std = np.nan
-            summary += f" {std: .2e}" + " " * (w - 10)
-        summary += "\n"
+            summary.append(f" {std: .2e}" + " " * (w - 10))
+        summary.append("\n")
 
-        return summary
+        return "".join(summary)
 
 
 def get_plottable_protocol_bin_edges(axis):
