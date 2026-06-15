@@ -59,6 +59,8 @@ Homepage = "https://github.com/scikit-hep/histoprint"
 version.source = "vcs"
 build.hooks.vcs.version-file = "histoprint/version.py"
 
+[tool.setuptools_scm]
+write_to = "histoprint/version.py"
 
 [tool.uv]
 environments = ["python_version >= '3.11'"]
