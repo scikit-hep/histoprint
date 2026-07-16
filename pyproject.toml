@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
@@ -54,6 +55,10 @@ histoprint = "histoprint.cli:histoprint"
 Homepage = "https://github.com/scikit-hep/histoprint"
 
 
+[dependency-groups]
+dev = ["histoprint[boost,rich,test,uproot]", "pandas"]
+
+
 [tool.hatch]
 version.source = "vcs"
 build.hooks.vcs.version-file = "histoprint/version.py"
@@ -64,7 +69,6 @@ write_to = "histoprint/version.py"
 
 
 [tool.uv]
-dev-dependencies = ["histoprint[boost,rich,test,uproot]", "pandas"]
 environments = ["python_version >= '3.11'"]
 
 
