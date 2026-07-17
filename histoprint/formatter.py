@@ -35,7 +35,7 @@ class Hixel:
 
         allowed = r" =|\/"
         if char not in allowed:
-            msg = f"Symbol not one of the allowed: '{allowed!r}'"
+            msg = f"Symbol not one of the allowed: {allowed!r}"
             raise ValueError(msg)
 
         if fg == self.fg_color:
@@ -50,12 +50,19 @@ class Hixel:
             compose_combinations = {
                 ("/", "\\"): "X",
                 ("\\", "/"): "X",
+                ("/", "/"): "/",
+                ("\\", "\\"): "\\",
                 (" ", "\\"): "\\",
                 (" ", "/"): "/",
             }
             if char in compose_chars:
                 if self.compose is not None:
-                    self.compose = compose_combinations.get((self.compose, char))
+                    # Fall back to the existing composing character (e.g. when
+                    # re-adding the same symbol, or composing onto an "X") so
+                    # the glyph is never erased.
+                    self.compose = compose_combinations.get(
+                        (self.compose, char), self.compose
+                    )
             else:
                 self.character = char_combinations.get((self.character, char), char)
         elif char != " ":
@@ -117,7 +124,7 @@ class Hixel:
         ret = subs.get(char, char)
         # Characters can be displayed differently when they have a composing character on top.
         # This looks ugly if some Hixels of a histogram are covered by another and some are not.
-        # Unless explicitly asked for no compositio, if no composition is added,
+        # Unless explicitly asked for no composition, if no composition is added,
         # use empty composition character to make them all display the same.
         ret += subs.get(compose, "\u034f")
 
@@ -215,21 +222,12 @@ class BinFormatter:
         self.tick_mark = tick_mark
         self.no_tick_mark = no_tick_mark
         self.print_top_edge = print_top_edge
-        self.symbols = symbols
-        if self.symbols == "":
-            self.symbols = " "
-        self.fg_colors = fg_colors
-        if self.fg_colors == "":
-            self.fg_colors = "0"
-        self.bg_colors = bg_colors
-        if self.bg_colors == "":
-            self.bg_colors = "0"
+        self.symbols = symbols or " "
+        self.fg_colors = fg_colors or "0"
+        self.bg_colors = bg_colors or "0"
         self.stack = stack
         if use_color is None:
-            if any(c != "0" for c in fg_colors) or any(c != "0" for c in bg_colors):
-                self.use_color = True
-            else:
-                self.use_color = False
+            self.use_color = any(c != "0" for c in fg_colors + bg_colors)
         else:
             self.use_color = use_color
         self.compose: str | None = None
@@ -269,15 +267,15 @@ class BinFormatter:
             self.compose = None
 
         # Format bin
-        bin_string = ""
+        bin_string = []
         for i_line in range(width):
             # Print axis
             if self.print_top_edge and i_line == 0:
-                bin_string += self.tick(top)
+                bin_string.append(self.tick(top))
             elif not self.print_top_edge and i_line == (width - 1):
-                bin_string += self.tick(bottom)
+                bin_string.append(self.tick(bottom))
             else:
-                bin_string += self.no_tick()
+                bin_string.append(self.no_tick())
 
             # Print symbols
             line = []
@@ -289,7 +287,7 @@ class BinFormatter:
             ):
                 if h:
                     if self.stack:
-                        # Just print them all afer one another
+                        # Just print them all after one another
                         line += [
                             Hixel(s, fg, bg, self.use_color, self.compose)
                             for _ in range(h)
@@ -307,12 +305,12 @@ class BinFormatter:
                             hix.add(s, fg, bg)
 
             for hix in line:
-                bin_string += hix.render()
+                bin_string.append(hix.render())
 
             # New line
-            bin_string += "\n"
+            bin_string.append("\n")
 
-        return bin_string
+        return "".join(bin_string)
 
     def tick(self, edge):
         """Format the tick mark of a bin."""
@@ -324,13 +322,13 @@ class BinFormatter:
 
 
 class HistFormatter:
-    """Class that handles the formating of histograms.
+    """Class that handles the formatting of histograms.
 
     Parameters
     ----------
 
     lines, columns : int, optional
-        The number of lines and maximum numbre of columns of the output.
+        The number of lines and maximum number of columns of the output.
     count_area : bool, optional
         Whether the bin content is represented by the area or height of the bin.
     scale_bin_width : bool, optional
@@ -370,14 +368,16 @@ class HistFormatter:
         **kwargs,
     ):
         self.title = title
-        self.edges = edges
+        # Convert edges to float once, so integer or plain-list edges are safe
+        # for the arithmetic and in-place scaling done below.
+        self.edges = np.asarray(edges, dtype=float)
         # Fit histograms into the terminal, unless otherwise specified
         term_size = shutil.get_terminal_size()
         if columns is None:
-            columns = term_size[0] - 1
+            columns = term_size.columns - 1
         if lines is None:
             # Try to keep a constant aspect ratio
-            lines = min(int(columns / 3.5) + 1, term_size[1] - 1)
+            lines = min(int(columns / 3.5) + 1, term_size.lines - 1)
         self.lines = lines
         self.columns = columns
         self.summary = summary
@@ -385,11 +385,10 @@ class HistFormatter:
         self.max_count = max_count
 
         self.hist_lines = lines - 1  # Less one line for the first tick
-        if len(self.title):
+        if self.title:
             # Make room for the title
             self.hist_lines -= 1
 
-        self.summary = summary
         if self.summary:
             # Make room for a summary at the bottom
             self.hist_lines -= 4
@@ -401,24 +400,24 @@ class HistFormatter:
             # Try to scale bins so the number of lines is
             # roughly proportional to the bin width
             line_scale = (
-                (edges[-1] - edges[0]) / self.hist_lines
+                (self.edges[-1] - self.edges[0]) / self.hist_lines
             ) * 0.999  # <- avoid rounding issues
         else:
             # Choose the largest bin as scale,
             # so all bins will scale to <= 1 lines
             # and be rendered with one line
-            line_scale = np.max(edges[1:] - edges[:-1])
+            line_scale = np.max(self.edges[1:] - self.edges[:-1])
         if line_scale == 0.0:
             line_scale = 1.0
-        self.bin_lines = ((edges[1:] - edges[:-1]) // line_scale).astype(int)
+        self.bin_lines = ((self.edges[1:] - self.edges[:-1]) // line_scale).astype(int)
         self.bin_lines = np.where(self.bin_lines, self.bin_lines, 1)
         self.bin_formatter = BinFormatter(**kwargs)
 
     def format_histogram(self, counts):
         """Format (a set of) histogram counts.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
 
         counts : ndarray
             The histogram entries to be plotted.
@@ -453,52 +452,54 @@ class HistFormatter:
         symbol_scale = max_c / hist_width
         self.bin_formatter.scale = symbol_scale * 0.999  # <- avoid rounding issues
 
-        hist_string = ""
+        hist_string = []
 
         # Write the title line
-        if len(self.title):
-            hist_string += f"{self.title: ^{self.columns:d}s}\n"
+        if self.title:
+            hist_string.append(f"{self.title: ^{self.columns:d}s}\n")
 
         # Get bin edges
         top = np.array(self.edges[:-1])
         bottom = np.array(self.edges[1:])
-        # Caclucate common exponent
-        common_exponent = np.floor(np.log10(np.max(np.abs(self.edges))))
+        # Calculate common exponent, guarding against all-zero edges
+        max_edge = float(np.max(np.abs(self.edges)))
+        common_exponent = 0.0 if max_edge == 0 else np.floor(np.log10(max_edge))
         top /= 10**common_exponent
         bottom /= 10**common_exponent
 
         # Write the first tick, common exponent and horizontal axis
-        hist_string += self.bin_formatter.tick(top[0])
+        hist_string.append(self.bin_formatter.tick(top[0]))
         ce_string = f" x 10^{common_exponent:+03.0f}" if common_exponent != 0 else ""
 
-        hist_string += ce_string
+        hist_string.append(ce_string)
         if self.bin_formatter.count_area:
             longest_count = f"{max_c:g}/row"
         else:
             longest_count = f"{max_c:g}"
-        hist_string += f"{longest_count:>{hist_width - len(ce_string) - 2:d}s} \u2577\n"
+        hist_string.append(
+            f"{longest_count:>{hist_width - len(ce_string) - 2:d}s} \u2577\n"
+        )
 
         # Write the bins
         for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
-            hist_string += self.bin_formatter.format_bin(t, b, c, w)
+            hist_string.append(self.bin_formatter.format_bin(t, b, c, w))
 
         if self.summary:
-            hist_string += self.summarize(counts, top, bottom)
+            hist_string.append(self.summarize(counts, top, bottom))
         elif any(len(lab) > 0 for lab in self.labels):
-            hist_string += self.summarize(counts, top, bottom, legend_only=True)
+            hist_string.append(self.summarize(counts, top, bottom, legend_only=True))
 
-        return hist_string
+        return "".join(hist_string)
 
     def summarize(self, counts, top, bottom, legend_only=False):
         """Calculate some summary statistics."""
 
-        summary = ""
         bin_values = (top + bottom) / 2
 
         label_widths = []
 
         # First line: symbol, label
-        summary += "     "
+        first_line = ["     "]
         for _, lab, s, fg, bg in zip(
             counts,
             cycle(self.labels),
@@ -508,49 +509,47 @@ class HistFormatter:
         ):
             # Pad label to make room for numbers below
             pad_lab = f"{lab:<9}"
-            label = " "
-            label += Hixel(
+            hixel = Hixel(
                 s, fg, bg, self.bin_formatter.use_color, self.bin_formatter.compose
             ).render()
-            label += " " + pad_lab
+            first_line.append(f" {hixel} {pad_lab}")
             label_widths.append(3 + len(pad_lab))
-            summary += label
         pad = max(self.columns - (5 + np.sum(label_widths)), 0) // 2
-        summary = " " * pad + summary
-        summary += "\n"
+
+        summary = [" " * pad, *first_line, "\n"]
 
         if legend_only:
-            return summary
+            return "".join(summary)
 
         # Second line: Total
-        summary += " " * pad + "Tot:"
+        summary.append(" " * pad + "Tot:")
         for c, w in zip(counts, label_widths):
             tot = float(np.sum(c))
-            summary += f" {tot: .2e}" + " " * (w - 10)
-        summary += "\n"
+            summary.append(f" {tot: .2e}" + " " * (w - 10))
+        summary.append("\n")
 
         # Third line: Average
-        summary += " " * pad + "Avg:"
+        summary.append(" " * pad + "Avg:")
         for c, w in zip(counts, label_widths):
             try:
                 average = float(np.average(bin_values, weights=c))
             except ZeroDivisionError:
                 average = np.nan
-            summary += f" {average: .2e}" + " " * (w - 10)
-        summary += "\n"
+            summary.append(f" {average: .2e}" + " " * (w - 10))
+        summary.append("\n")
 
         # Fourth line: std
-        summary += " " * pad + "Std:"
+        summary.append(" " * pad + "Std:")
         for c, w in zip(counts, label_widths):
             try:
                 average = float(np.average(bin_values, weights=c))
                 std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
             except ZeroDivisionError:
                 std = np.nan
-            summary += f" {std: .2e}" + " " * (w - 10)
-        summary += "\n"
+            summary.append(f" {std: .2e}" + " " * (w - 10))
+        summary.append("\n")
 
-        return summary
+        return "".join(summary)
 
 
 def get_plottable_protocol_bin_edges(axis):
@@ -561,9 +560,9 @@ def get_plottable_protocol_bin_edges(axis):
     """
 
     out = np.empty(len(axis) + 1)
-    assert isinstance(axis[0], tuple), (
-        f"Currently only support non-discrete axes {axis}"
-    )
+    if not isinstance(axis[0], tuple):
+        msg = f"Currently only support non-discrete axes {axis}"
+        raise ValueError(msg)
     # TODO: Support discreete axes
     out[0] = axis[0][0]
     out[1:] = [axis[i][1] for i in range(len(axis))]
@@ -574,13 +573,19 @@ def get_count_edges(hist):
     """Get bin contents and edges from a compatible histogram."""
 
     # Support sequence of histograms
+    if isinstance(hist, Sequence) and len(hist) == 0:
+        msg = "Cannot plot an empty sequence of histograms"
+        raise ValueError(msg)
+
     if isinstance(hist, Sequence) and isinstance(hist[0], PlottableHistogram):
         count = np.stack([h.values() for h in hist])
         edges = get_plottable_protocol_bin_edges(hist[0].axes[0])
         for other_edges in (
             get_plottable_protocol_bin_edges(h.axes[0]) for h in hist[1:]
         ):
-            np.testing.assert_allclose(edges, other_edges)
+            if not np.allclose(edges, other_edges):
+                msg = "All histograms must share the same bin edges"
+                raise ValueError(msg)
 
     else:
         # Single histogram or (a,b,c, edges) tuple:

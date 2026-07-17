@@ -1,11 +1,13 @@
 import contextlib
 import io
+import warnings
 
 import numpy as np
 import pytest
 from uhi.numpy_plottable import ensure_plottable_histogram
 
 import histoprint as hp
+from histoprint.formatter import HistFormatter, Hixel
 
 
 def test_hist():
@@ -186,3 +188,41 @@ def test_rich_histogram():
     tab.add_row(hist, Align.center(hist), Align.right(hist))
 
     rich.print(tab)
+
+
+def test_hixel_same_symbol_overlay():
+    """Re-adding the same composing symbol must keep the glyph (issue #159)."""
+    h = Hixel("/", "W", "0", use_color=False, compose=" ")
+    h.add("/", "W", "0")
+    # The composing character must survive, not be erased to None.
+    assert h.compose == "/"
+    # And the rendered Hixel must still contain the "/" composing glyph.
+    assert "⃫" in h.render()
+
+
+def test_integer_edges():
+    """Integer bin edges must not crash the formatter (issue #159)."""
+    # Through HistFormatter directly.
+    HistFormatter(np.arange(5), columns=40).format_histogram(np.zeros(4))
+
+    # Through print_hist with an integer-edge tuple.
+    f = io.StringIO()
+    hist = (np.array([1, 2, 3, 4]), np.arange(5))
+    hp.print_hist(hist, file=f, columns=40, use_color=False)
+    assert f.getvalue()
+
+
+def test_degenerate_edges_no_warning():
+    """All-zero / degenerate edges must not emit numpy RuntimeWarnings."""
+    f = io.StringIO()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        hp.print_hist((np.zeros(4), np.zeros(5)), file=f, columns=40, use_color=False)
+    # The bogus "x 10^+nan" exponent label must not appear.
+    assert "nan" not in f.getvalue()
+
+
+def test_empty_list_raises():
+    """An empty input sequence must raise a clear ValueError (issue #159)."""
+    with pytest.raises(ValueError, match="empty"):
+        hp.print_hist([], file=io.StringIO())
