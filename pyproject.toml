@@ -40,13 +40,18 @@ boost = [
 rich = [
     "rich>=12",
 ]
-test = [
-    "pytest>=6.0",
-]
 uproot = [
     "awkward>=1",
     "uproot>=4",
 ]
+
+[dependency-groups]
+dev = [
+    { include-group = "test" },
+    "histoprint[boost,rich,uproot]",
+    "pandas",
+]
+test = ["pytest>=6.0"]
 
 [project.scripts]
 histoprint = "histoprint.cli:histoprint"
