@@ -132,15 +132,22 @@ def histoprint(infile, **kwargs):
         try:
             data_handle.seek(0)
             _histoprint_csv(data_handle, **kwargs)
-            raise SystemExit(0)
+            return
         except ImportError:
             click.echo("Cannot try CSV file format. Pandas module not found.", err=True)
+        except ValueError:
+            # Not a usable CSV file (e.g. no numeric data); fall through to the
+            # next interpreter and ultimately the file-format error.
+            pass
 
     # Try to interpret file as ROOT file
     try:
         _histoprint_root(infile, **kwargs)
         return
     except ImportError:
+        pass
+    except (OSError, ValueError):
+        # Not a readable ROOT file; fall through to the file-format error.
         pass
 
     raise click.FileError(infile, "Could not interpret the file format")
@@ -166,8 +173,16 @@ def _bin_edges(kwargs, data):
     return bins
 
 
+def _print_histograms(data, bins, **kwargs):
+    """Build histograms from the data columns and print them."""
+    hist: tuple[list[np.ndarray], np.ndarray] = ([], bins)
+    for d in data:
+        hist[0].append(np.histogram(d, bins=bins)[0])
+    hp.print_hist(hist, **kwargs)
+
+
 def _histoprint_txt(infile, **kwargs):
-    """Interpret file as as simple whitespace separated table."""
+    """Interpret file as a simple whitespace separated table."""
 
     # Read the data
     data = np.loadtxt(infile, ndmin=2)
@@ -191,30 +206,38 @@ def _histoprint_txt(infile, **kwargs):
             raise SystemExit(1) from None
         try:
             data = data[fields]
-        except KeyError:
+        except IndexError:
             click.echo("Field out of bounds.", err=True)
             raise SystemExit(1) from None
 
     # Interpret bins
     bins = _bin_edges(kwargs, data)
 
-    # Create the histogram(s)
-    hist: tuple[Any, Any] = ([], bins)
-    for d in data:
-        hist[0].append(np.histogram(d, bins=bins)[0])
-
-    # Print the histogram
-    hp.print_hist(hist, **kwargs)
+    # Print the histogram(s)
+    _print_histograms(data, bins, **kwargs)
 
 
 def _histoprint_csv(infile, **kwargs):
-    """Interpret file as as CSV file."""
+    """Interpret file as a CSV file."""
 
     import pandas as pd  # noqa: PLC0415 - Conditional import for optional CSV support
 
     # Read the data
     data = pd.read_csv(infile)
     cut = kwargs.pop("cut", "")
+
+    # Drop columns that are not numeric (e.g. text columns from a JSON blob
+    # that pandas happened to "parse"). If nothing numeric remains, this is not
+    # a usable CSV file, so raise a ValueError to let the dispatcher fall
+    # through to the next interpreter / the file-format error.
+    numeric_data = data.select_dtypes(include="number")
+    if numeric_data.shape[1] == 0:
+        raise ValueError("No numeric columns found in CSV input.")  # noqa: EM101 - internal control-flow signal
+    # Only restrict to numeric columns when there are non-numeric columns the
+    # user did not explicitly request, so explicit field selection still errors
+    # clearly on unknown/non-numeric names below.
+    if not kwargs.get("fields"):
+        data = numeric_data
     if cut is not None and len(cut) > 0:
         try:
             data = data[data.eval(cut)]
@@ -242,17 +265,18 @@ def _histoprint_csv(infile, **kwargs):
     # Interpret bins
     bins = _bin_edges(kwargs, data)
 
-    # Create the histogram(s)
-    hist: tuple[Any, Any] = ([], bins)
-    for d in data:
-        hist[0].append(np.histogram(d, bins=bins)[0])
+    # If the bin edges are not finite, there was no usable numeric range in the
+    # data. Raise a ValueError so the dispatcher falls through to the
+    # file-format error rather than printing a histogram of nan edges.
+    if not np.all(np.isfinite(np.asarray(bins, dtype=float))):
+        raise ValueError("No finite numeric range found in CSV input.")  # noqa: EM101 - internal control-flow signal
 
-    # Print the histogram
-    hp.print_hist(hist, **kwargs)
+    # Print the histogram(s)
+    _print_histograms(data, bins, **kwargs)
 
 
 def _histoprint_root(infile, **kwargs):
-    """Interpret file as as ROOT file."""
+    """Interpret file as a ROOT file."""
 
     # Import uproot
     try:
@@ -282,6 +306,16 @@ def _histoprint_root(infile, **kwargs):
         kwargs["labels"] = [field.split("/")[-1] for field in fields]
     labels = kwargs.pop("labels")
 
+    # Explicit labels must cover every field; otherwise ``zip`` below would
+    # silently drop the trailing fields.
+    if len(labels) < len(fields):
+        click.echo(
+            f"Got {len(labels)} label(s) for {len(fields)} field(s). "
+            "Provide one label per field (or none to derive them).",
+            err=True,
+        )
+        raise SystemExit(1)
+
     # Get possible cut expression
     cut = kwargs.pop("cut", "")
 
@@ -303,7 +337,7 @@ def _histoprint_root(infile, **kwargs):
 
     data = []
     # Find TTrees
-    trees: list[up.models.TTree.Model_TTree_v19] = []
+    trees: list[Any] = []
     tree_fields: list[list[dict[str, Any]]] = []
     for field, label in zip(fields, labels):
         branch = F
@@ -383,10 +417,5 @@ def _histoprint_root(infile, **kwargs):
     # Interpret bins
     bins = _bin_edges(kwargs, data)
 
-    # Create the histogram(s)
-    hist_data: tuple[list[np.ndarray], np.ndarray] = ([], bins)
-    for d in data:
-        hist_data[0].append(np.histogram(d, bins=bins)[0])
-
-    # Print the histogram
-    hp.print_hist(hist_data, **kwargs)
+    # Print the histogram(s)
+    _print_histograms(data, bins, **kwargs)
