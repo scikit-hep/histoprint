@@ -1,10 +1,11 @@
 """Module for plotting Numpy-like 1D histograms to the terminal."""
 
+from __future__ import annotations
+
 import shutil
 import sys
 from collections.abc import Sequence
 from itertools import cycle
-from typing import Optional
 
 import numpy as np
 from uhi.numpy_plottable import ensure_plottable_histogram
@@ -23,7 +24,7 @@ class Hixel:
 
     def __init__(self, char=" ", fg="0", bg="0", use_color=True, compose=" "):
         self.character = " "
-        self.compose: Optional[str] = compose
+        self.compose: str | None = compose
         self.fg_color = fg
         self.bg_color = bg
         self.use_color = use_color
@@ -231,7 +232,7 @@ class BinFormatter:
                 self.use_color = False
         else:
             self.use_color = use_color
-        self.compose: Optional[str] = None
+        self.compose: str | None = None
 
     def format_bin(self, top, bottom, counts, width=1):
         """Return a string that represents the bin.
