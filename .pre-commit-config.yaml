@@ -30,5 +30,5 @@ repos:
   hooks:
   - id: mypy
     files: histoprint
-    args: []
+    args: [--python-version=3.12]
     additional_dependencies: [numpy, types-click, uhi, rich]
