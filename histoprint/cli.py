@@ -305,7 +305,7 @@ def _histoprint_root(infile, **kwargs):
     # Find TTrees
     trees: list[up.models.TTree.Model_TTree_v19] = []
     tree_fields: list[list[dict[str, Any]]] = []
-    for field, label in zip(fields, labels):
+    for field, label in zip(fields, labels, strict=True):
         branch = F
         splitfield = field.split("/")
         for i, key in enumerate(splitfield):
@@ -334,7 +334,7 @@ def _histoprint_root(infile, **kwargs):
     # Reassign labels in correct order
     labels = []
     # Get and flatten the data
-    for tree, fields in zip(trees, tree_fields):
+    for tree, fields in zip(trees, tree_fields, strict=True):
         aliases = {}
         d = []
         for field in fields:

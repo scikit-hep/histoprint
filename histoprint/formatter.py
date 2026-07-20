@@ -479,7 +479,7 @@ class HistFormatter:
         hist_string += f"{longest_count:>{hist_width - len(ce_string) - 2:d}s} \u2577\n"
 
         # Write the bins
-        for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines):
+        for c, t, b, w in zip(counts.T, top, bottom, self.bin_lines, strict=True):
             hist_string += self.bin_formatter.format_bin(t, b, c, w)
 
         if self.summary:
@@ -524,14 +524,14 @@ class HistFormatter:
 
         # Second line: Total
         summary += " " * pad + "Tot:"
-        for c, w in zip(counts, label_widths):
+        for c, w in zip(counts, label_widths, strict=True):
             tot = float(np.sum(c))
             summary += f" {tot: .2e}" + " " * (w - 10)
         summary += "\n"
 
         # Third line: Average
         summary += " " * pad + "Avg:"
-        for c, w in zip(counts, label_widths):
+        for c, w in zip(counts, label_widths, strict=True):
             try:
                 average = float(np.average(bin_values, weights=c))
             except ZeroDivisionError:
@@ -541,7 +541,7 @@ class HistFormatter:
 
         # Fourth line: std
         summary += " " * pad + "Std:"
-        for c, w in zip(counts, label_widths):
+        for c, w in zip(counts, label_widths, strict=True):
             try:
                 average = float(np.average(bin_values, weights=c))
                 std = np.sqrt(np.average((bin_values - average) ** 2, weights=c))
