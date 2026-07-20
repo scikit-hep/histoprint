@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Removed
-- Support for Python 3.8.
+- Support for Python 3.8, 3.9.
 
 ## [2.6.0]
 
