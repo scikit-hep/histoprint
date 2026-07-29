@@ -1,3 +1,6 @@
+.. include:: logo/banner.txt
+    :code:
+
 ========================================================================
 histoprint - pretty print of NumPy (and other) histograms to the console
 ========================================================================
