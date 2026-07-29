@@ -61,11 +61,14 @@ dev = ["histoprint[boost,rich,test,uproot]", "pandas"]
 
 [tool.hatch]
 version.source = "vcs"
-build.hooks.vcs.version-file = "histoprint/version.py"
+build.hooks.vcs.version-file = "src/histoprint/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/histoprint"]
 
 
 [tool.setuptools_scm]
-write_to = "histoprint/version.py"
+write_to = "src/histoprint/version.py"
 
 
 [tool.uv]
@@ -81,7 +84,7 @@ testpaths = [
 
 
 [tool.mypy]
-files = ["histoprint"]
+files = ["src/histoprint"]
 python_version = "3.10"
 show_error_codes = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
