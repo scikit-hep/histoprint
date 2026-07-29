@@ -29,6 +29,6 @@ repos:
   rev: "v2.3.0"
   hooks:
   - id: mypy
-    files: histoprint
+    files: src/histoprint
     args: [--python-version=3.12]
     additional_dependencies: [numpy, types-click, uhi, rich]

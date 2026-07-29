@@ -127,4 +127,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-histoprint/version.py
+src/histoprint/version.py
