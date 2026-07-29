@@ -7,7 +7,7 @@ Single-package Python library: `histoprint/` — pretty-prints NumPy (and other)
 ## Commands
 
 - **Lint + format**: `pre-commit run --all-files` (runs ruff, ruff-format, mypy, plus standard hooks)
-- **Tests**: `pytest -s` (from repo root; installs via `pip install -e .[test,boost,uproot,rich] pandas`)
+- **Tests**: `pytest -s` (from repo root; installs via `uv pip install --system --group dev -e .`)
 - **Mypy only**: `pre-commit run mypy --all-files`
 - **Nox**: `nox` runs `lint` and `tests` sessions (nox uses uv backend)
 - **Build**: `nox -s build` or `python -m build`
