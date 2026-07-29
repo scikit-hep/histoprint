@@ -47,6 +47,9 @@ uproot = [
     "awkward>=1",
     "uproot>=4",
 ]
+csv = [
+    "pandas>=2.3"
+]
 
 [project.scripts]
 histoprint = "histoprint.cli:histoprint"
