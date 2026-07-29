@@ -16,6 +16,10 @@ Single-package Python library: `histoprint/` — pretty-prints NumPy (and other)
 
 Lint → typecheck → test. CI runs pre-commit separately from pytest.
 
+## Changelog
+
+Always update `CHANGELOG.md` under the `[Unreleased]` section when making user-facing changes.
+
 ## Key details
 
 - Python ≥3.10, tested 3.10–3.14. CI uses `uv pip install --system`.

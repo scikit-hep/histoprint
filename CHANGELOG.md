@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Out-of-range `--field` on text files now shows "Field out of bounds." instead of a raw traceback (issue #159).
+
 ### Removed
 - Support for Python 3.8, 3.9.
 
