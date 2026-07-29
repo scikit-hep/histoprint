@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0]
+
 ### Fixed
 - Out-of-range `--field` on text files now shows "Field out of bounds." instead of a raw traceback (issue #159).
 - Overlaying the same composing symbol no longer erases the glyph (issue #159).
