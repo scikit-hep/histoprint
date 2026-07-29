@@ -375,7 +375,7 @@ class HistFormatter:
         **kwargs,
     ):
         self.title = title
-        self.edges = edges
+        self.edges = np.asarray(edges, dtype=float)
         # Fit histograms into the terminal, unless otherwise specified
         term_size = shutil.get_terminal_size()
         if columns is None:
@@ -406,16 +406,16 @@ class HistFormatter:
             # Try to scale bins so the number of lines is
             # roughly proportional to the bin width
             line_scale = (
-                (edges[-1] - edges[0]) / self.hist_lines
+                (self.edges[-1] - self.edges[0]) / self.hist_lines
             ) * 0.999  # <- avoid rounding issues
         else:
             # Choose the largest bin as scale,
             # so all bins will scale to <= 1 lines
             # and be rendered with one line
-            line_scale = np.max(edges[1:] - edges[:-1])
+            line_scale = np.max(self.edges[1:] - self.edges[:-1])
         if line_scale == 0.0:
             line_scale = 1.0
-        self.bin_lines = ((edges[1:] - edges[:-1]) // line_scale).astype(int)
+        self.bin_lines = ((self.edges[1:] - self.edges[:-1]) // line_scale).astype(int)
         self.bin_lines = np.where(self.bin_lines, self.bin_lines, 1)
         self.bin_formatter = BinFormatter(**kwargs)
 
