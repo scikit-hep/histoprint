@@ -21,6 +21,7 @@ Installation
 ::
 
     $ python -m pip install histoprint
+    $ python -m pip install "histoprint[all]"   # with all optional dependencies
 
 ::
 

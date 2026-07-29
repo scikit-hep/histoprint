@@ -50,6 +50,9 @@ uproot = [
 csv = [
     "pandas>=2.3"
 ]
+all = [
+    "histoprint[boost,rich,uproot,csv]",
+]
 
 [project.scripts]
 histoprint = "histoprint.cli:histoprint"
@@ -59,7 +62,7 @@ Homepage = "https://github.com/scikit-hep/histoprint"
 
 
 [dependency-groups]
-dev = ["histoprint[test,boost,uproot,rich,csv]"]
+dev = ["histoprint[all,test]"]
 
 
 [tool.hatch]
