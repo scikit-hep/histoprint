@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- All-zero or degenerate bin edges no longer print an `x 10^+nan` exponent.
+- Composing a symbol onto an existing `X` glyph keeps the glyph.
+
+### Changed
+- Discrete axes, mismatched bin edges, and empty input sequences now raise clear
+  `TypeError`/`ValueError` messages instead of an assertion or a test helper.
+
 ## [2.7.0]
 
 ### Fixed
