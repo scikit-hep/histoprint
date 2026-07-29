@@ -3,7 +3,7 @@ from __future__ import annotations
 import nox
 
 nox.needs_version = ">=2024.4.15"
-nox.options.default_venv_backend = "uv|virtualenv"
+nox.options.default_venv_backend = "uv"
 
 ALL_PYTHONS = [
     c.split()[-1]
@@ -26,7 +26,7 @@ def tests(session):
     """
     Run the unit and regular tests.
     """
-    session.install(".[test,boost,uproot,rich]")
+    session.install("--group", "dev", "-e", ".")
     session.run("pytest", "-s", *session.posargs)
 
 
