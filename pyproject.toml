@@ -77,10 +77,6 @@ packages = ["src/histoprint"]
 write_to = "src/histoprint/version.py"
 
 
-[tool.uv]
-environments = ["python_version >= '3.11'"]
-
-
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra --strict-markers --showlocals --color=yes"
