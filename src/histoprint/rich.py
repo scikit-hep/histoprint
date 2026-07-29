@@ -1,4 +1,4 @@
-"""Module montaining classes that support the `rich` console protocol."""
+"""Module containing classes that support the `rich` console protocol."""
 
 from rich.text import Text
 
@@ -10,7 +10,7 @@ __all__ = ["RichHistogram"]
 class RichHistogram:
     """Histogram object that supports `Rich`'s `Console Protocol`.
 
-    Ths provided `hist` is kept as a reference, so it is possible to update its
+    The provided `hist` is kept as a reference, so it is possible to update its
     contents after the creation of the RichHistogram.
 
     Parameters
