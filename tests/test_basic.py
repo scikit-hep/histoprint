@@ -113,6 +113,15 @@ def test_uproot():
     hp.print_hist(hist, title="uproot TH1")
 
 
+def test_integer_edges():
+    """Integer bin edges should not crash HistFormatter (bug 3, #159)."""
+    hist = (np.array([1, 2, 3, 4]), np.arange(5))
+    hp.print_hist(hist, use_color=False)
+    # Also test plain Python list edges
+    hist = (np.array([1, 2, 3, 4]), [0.0, 1.0, 2.0, 3.0, 4.0])
+    hp.print_hist(hist, use_color=False)
+
+
 def test_stack():
     A = np.random.randn(1000) - 2
     B = np.random.randn(1000)
