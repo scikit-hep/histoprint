@@ -52,6 +52,11 @@ class Hixel:
                 ("\\", "/"): "X",
                 (" ", "\\"): "\\",
                 (" ", "/"): "/",
+                ("/", "/"): "/",
+                ("\\", "\\"): "\\",
+                ("X", "/"): "X",
+                ("X", "\\"): "X",
+                ("X", "X"): "X",
             }
             if char in compose_chars:
                 if self.compose is not None:
