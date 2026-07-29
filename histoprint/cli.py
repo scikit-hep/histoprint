@@ -176,7 +176,7 @@ def _histoprint_txt(infile, **kwargs):
     if cut is not None and len(cut) > 0:
         try:
             data = data[:, eval(cut)]
-        except Exception as e:
+        except Exception as e: # noqa: BLE001
             click.echo("Error interpreting the cut string:", err=True)
             click.echo(e, err=True)
             raise SystemExit(1) from None
@@ -218,7 +218,7 @@ def _histoprint_csv(infile, **kwargs):
     if cut is not None and len(cut) > 0:
         try:
             data = data[data.eval(cut)]
-        except Exception as e:
+        except Exception as e: # noqa: BLE001
             click.echo("Error interpreting the cut string:", err=True)
             click.echo(e, err=True)
             raise SystemExit(1) from None
@@ -359,7 +359,7 @@ def _histoprint_root(infile, **kwargs):
                 click.echo(e, err=True)
                 click.echo(f"Possible keys: {tree.keys()}", err=True)
                 raise SystemExit(1) from None
-            except Exception as e:
+            except Exception as e: # noqa: BLE001
                 click.echo("Error interpreting the cut string:", err=True)
                 click.echo(e, err=True)
                 raise SystemExit(1) from None
