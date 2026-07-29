@@ -47,6 +47,12 @@ uproot = [
     "awkward>=1",
     "uproot>=4",
 ]
+csv = [
+    "pandas>=2.3"
+]
+all = [
+    "histoprint[boost,rich,uproot,csv]",
+]
 
 [project.scripts]
 histoprint = "histoprint.cli:histoprint"
@@ -56,7 +62,7 @@ Homepage = "https://github.com/scikit-hep/histoprint"
 
 
 [dependency-groups]
-dev = ["histoprint[boost,rich,test,uproot]", "pandas"]
+dev = ["histoprint[all,test]"]
 
 
 [tool.hatch]
@@ -69,10 +75,6 @@ packages = ["src/histoprint"]
 
 [tool.setuptools_scm]
 write_to = "src/histoprint/version.py"
-
-
-[tool.uv]
-environments = ["python_version >= '3.11'"]
 
 
 [tool.pytest.ini_options]
