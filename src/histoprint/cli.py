@@ -191,7 +191,7 @@ def _histoprint_txt(infile, **kwargs):
             raise SystemExit(1) from None
         try:
             data = data[fields]
-        except KeyError:
+        except (KeyError, IndexError):
             click.echo("Field out of bounds.", err=True)
             raise SystemExit(1) from None
 
