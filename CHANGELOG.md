@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   error instead of a traceback or a histogram of `nan` edges (issue #159).
 - Giving fewer `--label` options than `--field` options for a ROOT file now
   shows a clear error instead of dropping the extra fields (issue #159).
+- All-zero or degenerate bin edges no longer print an `x 10^+nan` exponent.
+- Composing a symbol onto an existing `X` glyph keeps the glyph.
+
+### Changed
+- Discrete axes, mismatched bin edges, and empty input sequences now raise clear
+  `TypeError`/`ValueError` messages instead of an assertion or a test helper.
 
 ## [2.7.0]
 
