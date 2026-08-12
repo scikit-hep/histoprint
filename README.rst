@@ -6,6 +6,8 @@ histoprint - pretty print of NumPy (and other) histograms to the console
 
 |Scikit-HEP| |PyPI| |Conda-forge| |Zenodo-DOI|
 
+|CI|
+
 
 How does it work?
 -----------------
@@ -246,3 +248,6 @@ It can read in files or take data directly from STDIN::
 
 .. |Zenodo-DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.4792209.svg
    :target: http://doi.org/10.5281/zenodo.4792209
+
+.. |CI| image:: https://github.com/scikit-hep/histoprint/actions/workflows/pythontests.yml/badge.svg
+   :target: https://github.com/scikit-hep/histoprint/actions
