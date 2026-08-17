@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.1]
+
 ### Fixed
 - Files that are not valid text, CSV, or ROOT input now show the file-format
   error instead of a traceback or a histogram of `nan` edges (issue #159).
