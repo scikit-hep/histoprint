@@ -10,6 +10,7 @@ from __future__ import annotations
 import io
 import re
 import shutil
+from itertools import zip_longest
 
 import numpy as np
 
@@ -26,7 +27,7 @@ def capture(hist, **kwargs) -> list[str]:
 def side_by_side(left: list[str], right: list[str]) -> str:
     width = max((len(ln) for ln in left), default=0)
     rows = []
-    for l, r in zip(left, right, strict=False):
+    for l, r in zip_longest(left, right, fillvalue=""):
         rows.append(f"{l:<{width}}   {r}")
     return "\n".join(rows)
 

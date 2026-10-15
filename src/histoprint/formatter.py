@@ -19,19 +19,6 @@ DEFAULT_BG_COLORS = "K0000"
 __all__ = ["HistFormatter", "print_hist", "text_hist"]
 
 
-def _cyc(seq: str, i: int) -> str:
-    """Return the i-th character of ``seq``, cycling if it runs out.
-
-    Unlike ``itertools.cycle`` used elsewhere, this raises on an empty
-    ``seq`` so that a missing symbol/colour is reported immediately rather
-    than surfacing later as a confusing colour-code error.
-    """
-    if not seq:
-        msg = f"Cannot cycle over an empty sequence {seq!r}"
-        raise ValueError(msg)
-    return seq[i % len(seq)]
-
-
 class Hixel:
     """The smallest unit of a histogram plot."""
 
@@ -551,8 +538,10 @@ class HistFormatter:
         """Return the bin-edge label row as a list of chars.
 
         Labels are placed greedily left-to-right, skipping any that would
-        run into the previous one. The final (maximum) edge is always shown,
-        right-aligned to the bar's right edge so it does not overflow the row.
+        run into the previous one. The final (maximum) edge label is
+        right-aligned to the bar area's right edge; if that position would
+        collide with the previous label it is moved directly after it, and
+        dropped altogether when even that does not fit.
         """
         row = [" "] * width
         last_end = 0
@@ -563,15 +552,22 @@ class HistFormatter:
             if start >= last_end + 1:  # leave at least one space between labels
                 row[start : start + len(text)] = list(text)
                 last_end = start + len(text)
-        # Force the final label on, right-aligned to the last bar column,
-        # clearing whatever it overlaps.
+        # Final (maximum) edge label: right-aligned if it fits, otherwise after
+        # the previous label, otherwise skipped. Never overlaps another label.
         final = labels[-1]
         start = max(centers[-1] - len(final), 0)
         if start + len(final) > width:
             start = width - len(final)
-        if start < last_end:
-            row[last_end:start] = [" "] * (start - last_end)
-        row[start : start + len(final)] = list(final)
+        if start < last_end + 1:
+            start = last_end + 1
+            if start + len(final) > width:
+                start = width - len(final)
+        if (
+            start >= last_end + 1
+            and start + len(final) <= width
+            and len(final) <= width
+        ):
+            row[start : start + len(final)] = list(final)
         return row
 
     def _format_histogram_vertical(self, counts):
@@ -609,12 +605,16 @@ class HistFormatter:
             widths[idx] += 1
         # Never exceed the available width: with more bins than columns (or
         # many tiny bins) the sum of the widths naturally overshoots, so the
-        # surplus columns are dropped rather than extending past the plot.
+        # surplus columns are cut rather than extending past the plot. Only
+        # the bins that are actually drawn set the vertical scale, so the
+        # tallest visible bar still fills the plot area.
         total_w = min(int(np.sum(widths)), plot_width)
         starts = np.concatenate(([0], np.cumsum(widths)))
+        visible = starts[:-1] < total_w
 
-        # counts-per-character scale, using density when area represents counts
-        max_c = self._counts_per_char(counts, widths)
+        # counts-per-character scale over the drawn bins, using density when
+        # area represents counts
+        max_c = self._counts_per_char(counts[:, visible], exact[visible])
         scale = (max_c / plot_rows) * 0.999  # <- avoid rounding issues
 
         # Composition is decided once (mirroring the horizontal code) and must
@@ -628,12 +628,15 @@ class HistFormatter:
 
         # Build a grid of Hixels, indexed [row][column], row 0 = top
         grid = [
-            [Hixel(" ", compose=None, use_color=bf.use_color) for _ in range(total_w)]
+            [
+                Hixel(" ", compose=compose, use_color=bf.use_color)
+                for _ in range(total_w)
+            ]
             for _ in range(plot_rows)
         ]
         for ib in range(n_bins):
             cols = range(int(starts[ib]), min(int(starts[ib + 1]), total_w))
-            cell_scale = scale * (widths[ib] if bf.count_area else 1)
+            cell_scale = scale * (exact[ib] if bf.count_area else 1)
             if cell_scale <= 0:
                 continue
             heights = [int(c // cell_scale) for c in counts[:, ib]]
@@ -647,9 +650,9 @@ class HistFormatter:
                     row = plot_rows - 1 - r
                     for col in cols:
                         grid[row][col].add(
-                            _cyc(bf.symbols, ih),
-                            _cyc(bf.fg_colors, ih),
-                            _cyc(bf.bg_colors, ih),
+                            bf.symbols[ih % len(bf.symbols)],
+                            bf.fg_colors[ih % len(bf.fg_colors)],
+                            bf.bg_colors[ih % len(bf.bg_colors)],
                         )
                 base += h if bf.stack else 0
 
@@ -709,16 +712,17 @@ class HistFormatter:
 
         return "".join(out)
 
-    def _counts_per_char(self, counts, widths):
+    def _counts_per_char(self, counts, exact_widths):
         """Return the count reference the vertical axis is scaled against.
 
         When stacking, this is the per-bin sum; otherwise the per-bin maximum.
         When ``count_area`` is set, the per-bin value is a density (counts per
-        column). ``self.max_count`` overrides the data-driven maximum.
+        column) using the exact (non-rounded) bin widths. ``self.max_count``
+        overrides the data-driven maximum.
         """
         bf = self.bin_formatter
         tot_c = np.sum(counts, axis=0) if bf.stack else np.max(counts, axis=0)
-        denom = widths if bf.count_area else 1
+        denom = exact_widths if bf.count_area else 1
         max_c = (
             float(np.max(tot_c / denom)) if self.max_count is None else self.max_count
         )
