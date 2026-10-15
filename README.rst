@@ -138,6 +138,47 @@ The combining characters are ``/`` and ``\``. Note that they are used in the
 default set of characters for the 4th and 5th histogram if they are present.
 
 
+Vertical histograms
+^^^^^^^^^^^^^^^^^^^
+
+By default ``Histoprint`` plots one row per bin with bars extending to the
+right. Passing ``orientation="vertical"`` transposes the plot so that each bin
+is a column and the bars grow upwards from a baseline, matching the familiar
+bar-chart look. It supports the same options as the horizontal orientation
+(overlay, stacking, colours/symbols, summaries, variable bin widths), and the
+command line accepts ``-o vertical``::
+
+    rng = np.random.default_rng(0)
+    hist = np.histogram(rng.normal(size=1000), bins=15)
+    print_hist(hist, orientation="vertical", title="Vertical bins")
+
+    text_hist(data, bins=15, orientation="vertical")
+
+A vertical plot of a 1000-sample normal distribution, copied as text::
+
+                           Vertical bins
+                                          63.3333/col
+        63.3                         ███
+                                     ███
+                                     ██████
+                                     ██████
+                                     ██████
+                                     ██████
+                                     █████████████
+                                 █████████████████
+                              ████████████████████
+                              ████████████████████
+                              ███████████████████████
+                              ███████████████████████
+                           ██████████████████████████
+                           ██████████████████████████████
+             └──────────────────────────────────────────────────
+           -3.9   -2.97  -2.04 -1.11 -0.185  0.744 1.67    3.07
+
+Run ``examples/compare_orientations.py`` for a side-by-side comparison of the
+two orientations on the same data.
+
+
 Command line interface
 ----------------------
 
@@ -169,6 +210,11 @@ It can read in files or take data directly from STDIN::
       --bg-colors TEXT                Colour cycle for background colours.
                                       Default: 'K0000', Choices:
                                       '0rgbcmykwRGBCMYKW'
+
+      -o, --orientation [horizontal|vertical]
+                                      Direction in which bins are plotted: bars
+                                      extending right (horizontal) or upwards
+                                      (vertical).  [default: horizontal]
 
       -f, --field TEXT                Which fields to histogram. Interpretation of
                                       the fields depends on the file format. TXT

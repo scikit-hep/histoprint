@@ -1,5 +1,6 @@
 import contextlib
 import io
+import re
 import warnings
 
 import numpy as np
@@ -8,6 +9,11 @@ from uhi.numpy_plottable import ensure_plottable_histogram
 
 import histoprint as hp
 from histoprint.formatter import HistFormatter, Hixel
+
+
+def strip_ansi(text):
+    """Remove ANSI colour codes from a string so output can be compared as text."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 def test_hist():
@@ -230,3 +236,182 @@ def test_empty_list_raises():
     """An empty input sequence must raise a clear ValueError (issue #159)."""
     with pytest.raises(ValueError, match="empty"):
         hp.print_hist([], file=io.StringIO())
+
+
+def test_vertical_basic():
+    """Vertical mode renders a baseline, bars and stays within the width."""
+    rng = np.random.default_rng(0)
+    hist = np.histogram(rng.normal(size=500), bins=10, range=(-4, 4))
+    f = io.StringIO()
+    hp.print_hist(hist, file=f, columns=80, use_color=False, orientation="vertical")
+    out = strip_ansi(f.getvalue())
+    assert out
+    # Baseline with the corner marker must be present
+    assert "\u2514" in out
+    assert "\u2500" in out
+    # Some block characters were drawn (non-empty bars)
+    assert "\u2588" in out
+    # No line exceeds the requested width
+    assert max(len(line) for line in out.splitlines()) <= 80
+
+
+def test_vertical_bar_heights():
+    """Bars grow upward from the baseline, one column per bin, height ~ count."""
+    counts = np.array([10.0, 20.0, 40.0, 80.0])
+    edges = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+    f = io.StringIO()
+    hp.print_hist(
+        (counts, edges),
+        file=f,
+        columns=60,
+        lines=12,
+        use_color=False,
+        max_count=80.0,
+        count_area=False,
+        orientation="vertical",
+    )
+    out = strip_ansi(f.getvalue()).splitlines()
+    baseline = out.index(next(ln for ln in out if "\u2514" in ln))
+    # The bar area starts at the baseline corner column.
+    bar0 = out[baseline].index("\u2514")
+    # Reproduce the largest-remainder width split the formatter uses for 4
+    # equal bins over the 51-column plot area.
+    plot_width, n_bins = 51, 4
+    exact = np.full(n_bins, plot_width / n_bins)
+    widths = np.maximum(1, np.floor(exact).astype(int)).tolist()
+    for idx in np.argsort(-np.modf(exact)[0])[: plot_width - sum(widths)]:
+        widths[idx] += 1
+    starts = [0, *np.cumsum(widths)]
+    bar_left = [bar0 + s for s in starts[:-1]]
+    # plot_rows = number of bar rows above the baseline (the header is row 0).
+    plot_rows = baseline - 1
+    # Reproduce the formatter's height arithmetic: scale = max_count/plot_rows
+    # * 0.999, height = int(count / scale), clipped at plot_rows.
+    scale = 80.0 / plot_rows * 0.999
+    heights = [min(int(c // scale), plot_rows) for c in counts]
+    # The tallest bar must fill the plot area; the empty/short bars must not.
+    assert heights == [1, 2, 4, plot_rows]
+    # Row at height h must contain a block exactly in the bars that reach h.
+    for h in range(1, max(heights) + 1):
+        row = out[baseline - h]
+        cols = [i for i, ch in enumerate(row) if ch == "\u2588"]
+        present = [i for i in range(4) if heights[i] >= h]
+        expected_cols = set()
+        for i in present:
+            expected_cols.update(
+                range(bar_left[i], bar_left[i] + (starts[i + 1] - starts[i]))
+            )
+        assert set(cols) == expected_cols, (
+            f"h={h}: cols {sorted(cols)} != {sorted(expected_cols)}"
+        )
+
+
+def test_vertical_matches_horizontal_summary():
+    """Totals, averages and stds in the summary are orientation-independent."""
+    rng = np.random.default_rng(1)
+    a = np.histogram(rng.normal(-2, 1, 1000), bins=12, range=(-5, 5))[0]
+    b = np.histogram(rng.normal(2, 1, 1000), bins=12, range=(-5, 5))[0]
+    # Large edges exercise the common-exponent scaling of the summary values.
+    edges = np.linspace(-50000, 50000, 13)
+    hist_all = ([a, b], edges)
+
+    fh = io.StringIO()
+    hp.print_hist(
+        hist_all,
+        file=fh,
+        columns=90,
+        use_color=False,
+        summary=True,
+        labels=["A", "B"],
+    )
+    fv = io.StringIO()
+    hp.print_hist(
+        hist_all,
+        file=fv,
+        columns=90,
+        use_color=False,
+        summary=True,
+        labels=["A", "B"],
+        orientation="vertical",
+    )
+
+    def summary_lines(buf):
+        return [
+            ln
+            for ln in strip_ansi(buf.getvalue()).splitlines()
+            if ln.strip()[:4] in ("Tot:", "Avg:", "Std:")
+        ]
+
+    lines_h = summary_lines(fh)
+    lines_v = summary_lines(fv)
+    assert lines_h
+    assert lines_v
+    assert [ln.split() for ln in lines_h] == [ln.split() for ln in lines_v]
+
+
+def test_vertical_stack_and_overlay():
+    """Both stacked and overlaid multi-histograms render vertically."""
+    rng = np.random.default_rng(2)
+    a = np.histogram(rng.normal(size=300), bins=8)[0]
+    b = np.histogram(rng.normal(size=300), bins=8)[0]
+    hist_all = ([a, b], np.histogram(rng.normal(size=10), bins=8)[1])
+    for stack in (True, False):
+        f = io.StringIO()
+        hp.print_hist(
+            hist_all,
+            file=f,
+            columns=70,
+            use_color=False,
+            symbols="=|",
+            stack=stack,
+            orientation="vertical",
+        )
+        assert strip_ansi(f.getvalue())
+
+
+def test_vertical_invalid_orientation():
+    """An unknown orientation is rejected early."""
+    with pytest.raises(ValueError, match="orientation"):
+        HistFormatter(np.arange(5), orientation="diagonal")
+
+
+def test_vertical_degenerate_edges():
+    """Zero-width / empty data must not crash vertical mode."""
+    f = io.StringIO()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        hp.print_hist(
+            (np.zeros(4), np.arange(5)),
+            file=f,
+            columns=50,
+            use_color=False,
+            orientation="vertical",
+        )
+    assert "nan" not in strip_ansi(f.getvalue())
+
+
+def test_vertical_many_bins_fits_width():
+    """More bins than columns must stay within the requested width."""
+    counts = np.arange(40, dtype=float)
+    edges = np.arange(41, dtype=float)
+    f = io.StringIO()
+    hp.print_hist(
+        (counts, edges),
+        file=f,
+        columns=45,
+        lines=12,
+        use_color=False,
+        orientation="vertical",
+    )
+    out = strip_ansi(f.getvalue())
+    assert max(len(line) for line in out.splitlines()) <= 45
+
+
+def test_counts_mismatch_raises():
+    """A count array with the wrong number of bins raises a clear error."""
+    # np.arange(4) defines 3 bins, so a 2-entry count must be rejected.
+    # Exercised through HistFormatter directly (print_hist routes 1D input
+    # through the uhi PlottableProtocol, which validates edges first).
+    formatter = HistFormatter(np.arange(4), columns=40, orientation="vertical")
+    with pytest.raises(ValueError, match="but the edges define"):
+        formatter.format_histogram(np.array([1.0, 2.0]))

@@ -19,6 +19,19 @@ DEFAULT_BG_COLORS = "K0000"
 __all__ = ["HistFormatter", "print_hist", "text_hist"]
 
 
+def _cyc(seq: str, i: int) -> str:
+    """Return the i-th character of ``seq``, cycling if it runs out.
+
+    Unlike ``itertools.cycle`` used elsewhere, this raises on an empty
+    ``seq`` so that a missing symbol/colour is reported immediately rather
+    than surfacing later as a confusing colour-code error.
+    """
+    if not seq:
+        msg = f"Cannot cycle over an empty sequence {seq!r}"
+        raise ValueError(msg)
+    return seq[i % len(seq)]
+
+
 class Hixel:
     """The smallest unit of a histogram plot."""
 
@@ -346,6 +359,10 @@ class HistFormatter:
         Set the maximum bin content for plotting. Otherwise largest bin will
         fill the available width. Should be a count density of counts per row
         if `count_area` is set.
+    orientation : {"horizontal", "vertical"}, optional
+        Direction in which the bins are plotted. "horizontal" (default) gives
+        one row per bin with bars extending to the right. "vertical" gives one
+        column per bin with bars extending upwards.
     **kwargs : optional
         Additional keyword arguments are passed to the `BinFormatter`
 
@@ -368,8 +385,13 @@ class HistFormatter:
         labels=("",),
         summary=False,
         max_count=None,
+        orientation="horizontal",
         **kwargs,
     ):
+        if orientation not in {"horizontal", "vertical"}:
+            msg = f"orientation must be 'horizontal' or 'vertical', got {orientation!r}"
+            raise ValueError(msg)
+        self.orientation = orientation
         self.title = title
         self.edges = np.asarray(edges, dtype=float)
         # Fit histograms into the terminal, unless otherwise specified
@@ -389,6 +411,9 @@ class HistFormatter:
         if self.title:
             # Make room for the title
             self.hist_lines -= 1
+        if orientation == "vertical":
+            # Make room for the x-axis line and its bin-edge labels
+            self.hist_lines -= 2
 
         if self.summary:
             # Make room for a summary at the bottom
@@ -396,6 +421,7 @@ class HistFormatter:
         elif any(len(lab) > 0 for lab in self.labels):
             # Make room for a legend at the bottom
             self.hist_lines -= 1
+        self.hist_lines = max(self.hist_lines, 1)
 
         if scale_bin_width:
             # Try to scale bins so the number of lines is
@@ -425,15 +451,15 @@ class HistFormatter:
 
         """
 
+        if self.orientation == "vertical":
+            return self._format_histogram_vertical(counts)
+
         axis_width = self.bin_formatter.tick_format_width + len(
             self.bin_formatter.tick_mark
         )
         hist_width = self.columns - axis_width
 
-        counts = np.nan_to_num(np.array(counts))
-        while counts.ndim < 2:
-            # Make sure counts is a 2D array
-            counts = counts[np.newaxis, ...]
+        counts = self._normalise_counts(counts)
 
         # Get max or total counts in each bin
         if self.bin_formatter.stack:
@@ -459,19 +485,13 @@ class HistFormatter:
         if self.title:
             hist_string.append(f"{self.title: ^{self.columns:d}s}\n")
 
-        # Get bin edges
-        top = np.array(self.edges[:-1])
-        bottom = np.array(self.edges[1:])
-        # Calculate common exponent, guarding against all-zero edges
-        max_edge = float(np.max(np.abs(self.edges)))
-        common_exponent = 0.0 if max_edge == 0 else np.floor(np.log10(max_edge))
-        top /= 10**common_exponent
-        bottom /= 10**common_exponent
+        # Get bin edges, scaled by the common exponent
+        common_exponent, ce_string = self._scale_string()
+        top = np.array(self.edges[:-1]) / 10**common_exponent
+        bottom = np.array(self.edges[1:]) / 10**common_exponent
 
         # Write the first tick, common exponent and horizontal axis
         hist_string.append(self.bin_formatter.tick(top[0]))
-        ce_string = f" x 10^{common_exponent:+03.0f}" if common_exponent != 0 else ""
-
         hist_string.append(ce_string)
         if self.bin_formatter.count_area:
             longest_count = f"{max_c:g}/row"
@@ -491,6 +511,231 @@ class HistFormatter:
             hist_string.append(self.summarize(counts, top, bottom, legend_only=True))
 
         return "".join(hist_string)
+
+    def _scale_string(self):
+        """Return ``(common_exponent, ce_string)`` for the bin edges.
+
+        ``ce_string`` is the ``" x 10^NNN"`` suffix (empty for small edges),
+        guarded against all-zero edges. Shared by both orientations.
+        """
+        max_edge = float(np.max(np.abs(self.edges))) if self.edges.size else 0.0
+        common_exponent = 0.0 if max_edge == 0 else np.floor(np.log10(max_edge))
+        ce_string = f" x 10^{common_exponent:+03.0f}" if common_exponent != 0 else ""
+        return common_exponent, ce_string
+
+    def _normalise_counts(self, counts):
+        """Return ``counts`` as a 2D array of shape ``(n_hists, n_bins)``.
+
+        ``nan``/``inf`` are replaced by zero and a 1D input is promoted to a
+        single histogram. Raises ``ValueError`` if the number of bins does not
+        match the edges, mirroring the project's clear-error style.
+        """
+        counts = np.nan_to_num(np.array(counts))
+        while counts.ndim < 2:
+            counts = counts[np.newaxis, ...]
+        n_bins = len(self.edges) - 1
+        if counts.shape[1] != n_bins:
+            msg = (
+                f"Bin counts have {counts.shape[1]} entries but the edges define "
+                f"{n_bins} bins"
+            )
+            raise ValueError(msg)
+        return counts
+
+    def _scaled_edges(self):
+        """Return ``self.edges`` divided by the common exponent."""
+        common_exponent, _ = self._scale_string()
+        return np.array(self.edges, dtype=float) / 10**common_exponent
+
+    def _x_labels(self, width, centers, labels):
+        """Return the bin-edge label row as a list of chars.
+
+        Labels are placed greedily left-to-right, skipping any that would
+        run into the previous one. The final (maximum) edge is always shown,
+        right-aligned to the bar's right edge so it does not overflow the row.
+        """
+        row = [" "] * width
+        last_end = 0
+        for center, text in zip(centers[:-1], labels[:-1], strict=True):
+            start = max(center - len(text) // 2, 0)
+            if len(text) <= width:
+                start = min(start, width - len(text))
+            if start >= last_end + 1:  # leave at least one space between labels
+                row[start : start + len(text)] = list(text)
+                last_end = start + len(text)
+        # Force the final label on, right-aligned to the last bar column,
+        # clearing whatever it overlaps.
+        final = labels[-1]
+        start = max(centers[-1] - len(final), 0)
+        if start + len(final) > width:
+            start = width - len(final)
+        if start < last_end:
+            row[last_end:start] = [" "] * (start - last_end)
+        row[start : start + len(final)] = list(final)
+        return row
+
+    def _format_histogram_vertical(self, counts):
+        """Format (a set of) histogram counts as vertical bars.
+
+        Each bin becomes a column of characters and the bar grows upwards from
+        the baseline, i.e. the transpose of :meth:`format_histogram`. It is
+        internal (no public ``format_histogram_vertical`` alias).
+        """
+        bf = self.bin_formatter
+        counts = self._normalise_counts(counts)
+        n_hists, n_bins = counts.shape
+
+        # Left margin is used for the y-axis value labels
+        left_width = bf.tick_format_width + len(bf.tick_mark)
+        plot_width = max(self.columns - left_width, 1)
+        plot_rows = max(self.hist_lines, 1)
+
+        # Column width per bin, distributed proportionally to each bin's edge
+        # width (largest-remainder method) so the bar area fills the available
+        # width exactly. This mirrors the horizontal "lines per bin" scaling but
+        # starts from the edge widths, which avoids overshooting when there are
+        # few bins.
+        edge_widths = np.diff(self.edges)
+        if np.sum(edge_widths) <= 0:
+            edge_widths = np.ones(n_bins)
+        exact = edge_widths * (plot_width / np.sum(edge_widths))
+        widths = np.maximum(1, np.floor(exact).astype(int))
+        # Hand out any leftover columns to the widest-fractional bins so the
+        # area fills exactly. If there are more bins than columns, ``widths``
+        # is already at least one per bin and nothing is left to distribute.
+        for idx in np.argsort(-np.modf(exact)[0])[
+            : max(plot_width - int(np.sum(widths)), 0)
+        ]:
+            widths[idx] += 1
+        # Never exceed the available width: with more bins than columns (or
+        # many tiny bins) the sum of the widths naturally overshoots, so the
+        # surplus columns are dropped rather than extending past the plot.
+        total_w = min(int(np.sum(widths)), plot_width)
+        starts = np.concatenate(([0], np.cumsum(widths)))
+
+        # counts-per-character scale, using density when area represents counts
+        max_c = self._counts_per_char(counts, widths)
+        scale = (max_c / plot_rows) * 0.999  # <- avoid rounding issues
+
+        # Composition is decided once (mirroring the horizontal code) and must
+        # be set before the grid is built, because Hixel rendering reads it.
+        compose = None
+        for s in bf.symbols[:n_hists]:
+            if s in COMPOSING_SYMBOLS:
+                compose = " "
+                break
+        bf.compose = compose
+
+        # Build a grid of Hixels, indexed [row][column], row 0 = top
+        grid = [
+            [Hixel(" ", compose=None, use_color=bf.use_color) for _ in range(total_w)]
+            for _ in range(plot_rows)
+        ]
+        for ib in range(n_bins):
+            cols = range(int(starts[ib]), min(int(starts[ib + 1]), total_w))
+            cell_scale = scale * (widths[ib] if bf.count_area else 1)
+            if cell_scale <= 0:
+                continue
+            heights = [int(c // cell_scale) for c in counts[:, ib]]
+            base = 0  # running offset for stacked bins
+            for ih in range(n_hists):
+                h = heights[ih]
+                # Stacked bins occupy a disjoint band [base, base+h); overlaid
+                # bins all grow from the baseline, so only the top differs.
+                top = min(base + h, plot_rows) if bf.stack else min(h, plot_rows)
+                for r in range(base, top):
+                    row = plot_rows - 1 - r
+                    for col in cols:
+                        grid[row][col].add(
+                            _cyc(bf.symbols, ih),
+                            _cyc(bf.fg_colors, ih),
+                            _cyc(bf.bg_colors, ih),
+                        )
+                base += h if bf.stack else 0
+
+        # --- Assemble the output ---
+        out = []
+        if self.title:
+            out.append(f"{self.title: ^{self.columns:d}s}\n")
+
+        _, ce_string = self._scale_string()
+        # Header: the count-per-column scale, right aligned so the line is
+        # exactly self.columns wide (mirrors the horizontal header).
+        longest_count = f"{max_c:g}/col" if bf.count_area else f"{max_c:g}"
+        pad = self.columns - left_width - len(ce_string) - len(longest_count)
+        out.append(
+            " " * left_width + ce_string + f"{longest_count:>{max(pad, 0):d}s}\n"
+        )
+
+        # Bar rows with a y-axis tick on the left gutter
+        gutter = " " * left_width
+        for i, row in enumerate(grid):
+            if i == 0:
+                tick = self._y_tick(max_c, left_width)
+            elif i == plot_rows - 1:
+                tick = self._y_tick(0.0, left_width)
+            else:
+                tick = " " * left_width
+            out.append(tick + "".join(h.render() for h in row) + "\n")
+
+        # Baseline: corner at the bar-area left edge, dashes filling the rest.
+        # Kept to exactly self.columns wide so it matches the bar rows.
+        out.append(
+            gutter + "\u2514" + "\u2500" * (self.columns - left_width - 1) + "\n"
+        )
+
+        # Bin-edge labels underneath the baseline. A compact 3-significant-
+        # figure format is used because full ``tick_format`` values (8 chars)
+        # are far wider than the per-bin column spacing and would never fit.
+        edges = self._scaled_edges()
+        labels = [f"{e:.3g}" for e in edges]
+        bar0 = left_width  # label row index of bar column 0
+        centers = [
+            bar0 + (int(starts[ib]) if ib < n_bins else total_w - 1)
+            for ib in range(n_bins + 1)
+        ]
+        label_row = self._x_labels(self.columns, centers, labels)
+        out.append("".join(label_row).rstrip() + "\n")
+
+        if self.summary or any(len(lab) > 0 for lab in self.labels):
+            # Scale edges by the common exponent (as the horizontal path does)
+            # so the summary statistics are orientation-independent.
+            scaled = self._scaled_edges()
+            out.append(
+                self.summarize(
+                    counts, scaled[:-1], scaled[1:], legend_only=not self.summary
+                )
+            )
+
+        return "".join(out)
+
+    def _counts_per_char(self, counts, widths):
+        """Return the count reference the vertical axis is scaled against.
+
+        When stacking, this is the per-bin sum; otherwise the per-bin maximum.
+        When ``count_area`` is set, the per-bin value is a density (counts per
+        column). ``self.max_count`` overrides the data-driven maximum.
+        """
+        bf = self.bin_formatter
+        tot_c = np.sum(counts, axis=0) if bf.stack else np.max(counts, axis=0)
+        denom = widths if bf.count_area else 1
+        max_c = (
+            float(np.max(tot_c / denom)) if self.max_count is None else self.max_count
+        )
+        if max_c == 0:
+            max_c = 1.0
+        return max_c
+
+    def _y_tick(self, value, width):
+        """Right-align a y-axis count value in ``width`` characters.
+
+        Zero is rendered as a plain gutter (spaces) so the baseline row stays
+        uncluttered.
+        """
+        if not value:
+            return " " * width
+        text = f"{value:.3g}"
+        return f"{text:>{width - 1:d}s} "
 
     def summarize(self, counts, top, bottom, legend_only=False):
         """Calculate some summary statistics."""
@@ -631,6 +876,7 @@ def text_hist(*args, density=None, **kwargs):
         "fg_colors": kwargs.pop("fg_colors", DEFAULT_FG_COLORS),
         "bg_colors": kwargs.pop("bg_colors", DEFAULT_BG_COLORS),
         "count_area": kwargs.pop("count_area", True),
+        "orientation": kwargs.pop("orientation", "horizontal"),
     }
     if density:
         print_kwargs["count_area"] = False
