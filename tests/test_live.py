@@ -59,12 +59,17 @@ def test_repaints_in_place():
     assert len(stream.writes) == 2
     first, second = stream.writes
     assert "\x1b" not in first
-    match = re.match(r"\x1b\[(\d+)F\x1b\[J", second)
+    match = re.match(r"\x1b\[(\d+)F\r", second)
     assert match is not None
     # Cursor moves back by the number of lines of the previous frame.
     assert int(match.group(1)) == first.count("\n")
-    # The rest of the second write is a plain re-render of the new histogram.
-    assert second[match.end() :] == expected_frame(hist2)
+    # Repainting is line-by-line: every line is written and then erased to
+    # the end of the line, but the frame is never erased as a whole.
+    assert "\x1b[J" not in second
+    assert "\x1b[K" in second
+    # The visible result equals a plain re-render of the new histogram.
+    plain = re.sub(r"\x1b\[[0-9;]*[A-Za-z]|\r", "", second)
+    assert plain == expected_frame(hist2)
 
 
 def test_shrinking_frame():
@@ -76,11 +81,15 @@ def test_shrinking_frame():
         live.update(make_hist(bins=6))
 
     first, second = stream.writes
-    match = re.match(r"\x1b\[(\d+)F\x1b\[J", second)
+    match = re.match(r"\x1b\[(\d+)F\r", second)
     assert match is not None
     assert int(match.group(1)) == first.count("\n")
-    # A shorter frame is repainted in place rather than appended below.
-    assert second[match.end() :].count("\n") < first.count("\n")
+    # A shorter frame is repainted in place rather than appended below, and
+    # the rows left over from the taller previous frame are erased below it.
+    plain = re.sub(r"\x1b\[[0-9;]*[A-Za-z]|\r", "", second)
+    assert plain.count("\n") < first.count("\n")
+    assert "\x1b[J" in second
+    assert plain == expected_frame(make_hist(bins=6), scale_bin_width=False)
 
 
 def test_growing_frame():
@@ -97,18 +106,22 @@ def test_growing_frame():
         live.update(tall2)  # new content, same height
 
     first, second, third = stream.writes
-    m2 = re.match(r"\x1b\[(\d+)F\x1b\[J", second)
+    m2 = re.match(r"\x1b\[(\d+)F\r", second)
     assert m2 is not None
     # The cursor moves up by the previous (shorter) frame's height.
     assert int(m2.group(1)) == first.count("\n")
     # The new frame is taller and is painted in place, not appended below.
-    assert second[m2.end() :].count("\n") > first.count("\n")
+    plain2 = re.sub(r"\x1b\[[0-9;]*[A-Za-z]|\r", "", second)
+    assert plain2.count("\n") > first.count("\n")
+    assert plain2 == expected_frame(tall, scale_bin_width=False)
 
-    m3 = re.match(r"\x1b\[(\d+)F\x1b\[J", third)
+    m3 = re.match(r"\x1b\[(\d+)F\r", third)
     assert m3 is not None
     # After a growth, the next repaint uses the new, larger height.
-    assert int(m3.group(1)) == second[m2.end() :].count("\n")
-    assert third[m3.end() :] == expected_frame(tall2, scale_bin_width=False)
+    assert int(m3.group(1)) == plain2.count("\n")
+    assert "\x1b[J" not in third
+    plain3 = re.sub(r"\x1b\[[0-9;]*[A-Za-z]|\r", "", third)
+    assert plain3 == expected_frame(tall2, scale_bin_width=False)
 
 
 def test_non_tty_fallback():

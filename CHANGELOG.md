@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LiveHistogram` context manager to redraw a histogram in place at a fixed
   terminal position, for updating a histogram live while data is collected.
 
+### Fixed
+- `LiveHistogram` no longer erases the whole previous frame before redrawing.
+  It now overwrites the frame line by line, which removes the blank
+  "flash" between updates that was visible when recording to GIF or video.
+
 ## [2.7.1]
 
 ### Fixed
