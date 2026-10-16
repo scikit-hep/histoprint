@@ -237,6 +237,15 @@ It can read in files or take data directly from STDIN::
                              Std:  6.87e-01    7.48e-01
 
 
+For 2D histograms, an additional ``hist2d`` module renders them as terminal
+heatmaps (each bin is a single character). It ships its own command-line tool::
+
+    $ hist2d data.txt --no-color -c 80
+    $ python -m hist2d data.csv -f x -f y -t "2D heatmap"
+
+See ``hist2d/README.md`` for the full list of supported inputs and options.
+
+
 .. |Scikit-HEP| image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
    :target: https://scikit-hep.org/
 
