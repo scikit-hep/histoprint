@@ -8,7 +8,6 @@ Run with:  python examples/compare_orientations.py
 from __future__ import annotations
 
 import io
-import re
 import shutil
 from itertools import zip_longest
 
@@ -20,8 +19,7 @@ from histoprint import print_hist
 def capture(hist, **kwargs) -> list[str]:
     buf = io.StringIO()
     print_hist(hist, file=buf, **kwargs)
-    text = re.sub(r"\x1b\[[0-9;]*m", "", buf.getvalue())
-    return text.rstrip("\n").split("\n")
+    return buf.getvalue().rstrip("\n").split("\n")
 
 
 def side_by_side(left: list[str], right: list[str]) -> str:

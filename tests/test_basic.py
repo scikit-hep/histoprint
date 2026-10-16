@@ -11,11 +11,6 @@ import histoprint as hp
 from histoprint.formatter import HistFormatter, Hixel
 
 
-def strip_ansi(text):
-    """Remove ANSI colour codes from a string so output can be compared as text."""
-    return re.sub(r"\x1b\[[0-9;]*m", "", text)
-
-
 def test_hist():
     """Poor man's unit tests."""
 
@@ -244,7 +239,7 @@ def test_vertical_basic():
     hist = np.histogram(rng.normal(size=500), bins=10, range=(-4, 4))
     f = io.StringIO()
     hp.print_hist(hist, file=f, columns=80, use_color=False, orientation="vertical")
-    out = strip_ansi(f.getvalue())
+    out = f.getvalue()
     assert out
     # Baseline with the corner marker must be present
     assert "\u2514" in out
@@ -270,7 +265,7 @@ def test_vertical_bar_heights():
         count_area=False,
         orientation="vertical",
     )
-    out = strip_ansi(f.getvalue()).splitlines()
+    out = f.getvalue().splitlines()
     baseline = out.index(next(ln for ln in out if "\u2514" in ln))
     # The bar area starts at the baseline corner column.
     bar0 = out[baseline].index("\u2514")
@@ -314,7 +309,7 @@ def test_vertical_composing_symbols():
         use_color=False,
         symbols="|=/\\",
     )
-    out = strip_ansi(f.getvalue())
+    out = f.getvalue()
     assert "\u20e5" in out or "\u20eb" in out
 
 
@@ -350,7 +345,7 @@ def test_vertical_matches_horizontal_summary():
     def summary_lines(buf):
         return [
             ln
-            for ln in strip_ansi(buf.getvalue()).splitlines()
+            for ln in buf.getvalue().splitlines()
             if ln.strip()[:4] in ("Tot:", "Avg:", "Std:")
         ]
 
@@ -378,7 +373,7 @@ def test_vertical_stack_and_overlay():
             stack=stack,
             orientation="vertical",
         )
-        assert strip_ansi(f.getvalue())
+        assert f.getvalue()
 
 
 def test_vertical_invalid_orientation():
@@ -399,7 +394,7 @@ def test_vertical_degenerate_edges():
             use_color=False,
             orientation="vertical",
         )
-    assert "nan" not in strip_ansi(f.getvalue())
+    assert "nan" not in f.getvalue()
 
 
 def test_vertical_many_bins_fits_width():
@@ -415,7 +410,7 @@ def test_vertical_many_bins_fits_width():
         use_color=False,
         orientation="vertical",
     )
-    out = strip_ansi(f.getvalue())
+    out = f.getvalue()
     assert max(len(line) for line in out.splitlines()) <= 45
     # Dense labels must not merge into a single ambiguous token like "1.63.07".
     lines_out = out.splitlines()
@@ -445,7 +440,7 @@ def test_vertical_final_label_kept():
         use_color=False,
         orientation="vertical",
     )
-    label_row = strip_ansi(f.getvalue()).splitlines()[-1]
+    label_row = f.getvalue().splitlines()[-1]
     assert label_row.rstrip().endswith("3.07")
     assert label_row.lstrip().startswith("-3.9")
     assert "  " in label_row.strip()  # labels never touch
