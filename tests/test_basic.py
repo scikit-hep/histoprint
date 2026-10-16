@@ -418,8 +418,37 @@ def test_vertical_many_bins_fits_width():
     out = strip_ansi(f.getvalue())
     assert max(len(line) for line in out.splitlines()) <= 45
     # Dense labels must not merge into a single ambiguous token like "1.63.07".
-    label_row = out.splitlines()[-1]
+    lines_out = out.splitlines()
+    label_row = lines_out[-1]
     assert not re.search(r"\d\.\d+\.\d", label_row)
+    # The maximum edge is always labelled (edges are scaled by x 10^+01).
+    assert label_row.rstrip().endswith("4")
+    # No data is dropped: the tallest (last) bins reach the top of the plot.
+    top_row = lines_out[1]
+    assert top_row.rstrip().endswith("\u2588")
+    # All counts contribute: the surplus bins are merged, not cut.
+    assert "/col" in lines_out[0]
+    bars = [ln for ln in lines_out if "\u2588" in ln]
+    assert len(bars) == 9
+
+
+def test_vertical_final_label_kept():
+    """The maximum edge label wins over a colliding neighbour."""
+    counts = np.ones(15)
+    edges = np.linspace(-3.9, 3.07, 16)
+    f = io.StringIO()
+    hp.print_hist(
+        (counts, edges),
+        file=f,
+        columns=40,
+        lines=8,
+        use_color=False,
+        orientation="vertical",
+    )
+    label_row = strip_ansi(f.getvalue()).splitlines()[-1]
+    assert label_row.rstrip().endswith("3.07")
+    assert label_row.lstrip().startswith("-3.9")
+    assert "  " in label_row.strip()  # labels never touch
 
 
 def test_counts_mismatch_raises():

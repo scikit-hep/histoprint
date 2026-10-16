@@ -515,7 +515,7 @@ class HistFormatter:
 
         ``nan``/``inf`` are replaced by zero and a 1D input is promoted to a
         single histogram. Raises ``ValueError`` if the number of bins does not
-        match the edges, mirroring the project's clear-error style.
+        match the edges.
         """
         counts = np.nan_to_num(np.array(counts))
         while counts.ndim < 2:
@@ -537,45 +537,30 @@ class HistFormatter:
     def _x_labels(self, width, centers, labels):
         """Return the bin-edge label row as a list of chars.
 
-        Labels are placed greedily left-to-right, skipping any that would
-        run into the previous one. The final (maximum) edge label is
-        right-aligned to the bar area's right edge; if that position would
-        collide with the previous label it is moved directly after it, and
-        dropped altogether when even that does not fit.
+        The final (maximum) edge label is always shown, right-aligned to the
+        bar area. The other labels are placed greedily left-to-right and
+        skipped if they would touch a neighbour.
         """
         row = [" "] * width
+        final = labels[-1]
+        final_start = max(min(centers[-1] - len(final), width - len(final)), 0)
+        row[final_start : final_start + len(final)] = list(final)
         last_end = 0
         for center, text in zip(centers[:-1], labels[:-1], strict=True):
             start = max(center - len(text) // 2, 0)
-            if len(text) <= width:
-                start = min(start, width - len(text))
-            if start >= last_end + 1:  # leave at least one space between labels
-                row[start : start + len(text)] = list(text)
-                last_end = start + len(text)
-        # Final (maximum) edge label: right-aligned if it fits, otherwise after
-        # the previous label, otherwise skipped. Never overlaps another label.
-        final = labels[-1]
-        start = max(centers[-1] - len(final), 0)
-        if start + len(final) > width:
-            start = width - len(final)
-        if start < last_end + 1:
-            start = last_end + 1
-            if start + len(final) > width:
-                start = width - len(final)
-        if (
-            start >= last_end + 1
-            and start + len(final) <= width
-            and len(final) <= width
-        ):
-            row[start : start + len(final)] = list(final)
+            start = min(start, width - len(text))
+            end = start + len(text)
+            if start >= last_end + 1 and end + 1 <= final_start:
+                row[start:end] = list(text)
+                last_end = end
         return row
 
     def _format_histogram_vertical(self, counts):
         """Format (a set of) histogram counts as vertical bars.
 
         Each bin becomes a column of characters and the bar grows upwards from
-        the baseline, i.e. the transpose of :meth:`format_histogram`. It is
-        internal (no public ``format_histogram_vertical`` alias).
+        the baseline, i.e. the transpose of :meth:`format_histogram`. Adjacent
+        bins are merged when there are more bins than columns.
         """
         bf = self.bin_formatter
         counts = self._normalise_counts(counts)
@@ -586,39 +571,17 @@ class HistFormatter:
         plot_width = max(self.columns - left_width, 1)
         plot_rows = max(self.hist_lines, 1)
 
-        # Column width per bin, distributed proportionally to each bin's edge
-        # width (largest-remainder method) so the bar area fills the available
-        # width exactly. This mirrors the horizontal "lines per bin" scaling but
-        # starts from the edge widths, which avoids overshooting when there are
-        # few bins.
-        edge_widths = np.diff(self.edges)
-        if np.sum(edge_widths) <= 0:
-            edge_widths = np.ones(n_bins)
-        exact = edge_widths * (plot_width / np.sum(edge_widths))
-        widths = np.maximum(1, np.floor(exact).astype(int))
-        # Hand out any leftover columns to the widest-fractional bins so the
-        # area fills exactly. If there are more bins than columns, ``widths``
-        # is already at least one per bin and nothing is left to distribute.
-        for idx in np.argsort(-np.modf(exact)[0])[
-            : max(plot_width - int(np.sum(widths)), 0)
-        ]:
-            widths[idx] += 1
-        # Never exceed the available width: with more bins than columns (or
-        # many tiny bins) the sum of the widths naturally overshoots, so the
-        # surplus columns are cut rather than extending past the plot. Only
-        # the bins that are actually drawn set the vertical scale, so the
-        # tallest visible bar still fills the plot area.
-        total_w = min(int(np.sum(widths)), plot_width)
+        plot_counts, edges, widths = self._fit_bins_to_width(counts, plot_width)
+        n_bins = len(widths)
+        exact = np.diff(edges) * (plot_width / (edges[-1] - edges[0]))
+        total_w = int(np.sum(widths))
         starts = np.concatenate(([0], np.cumsum(widths)))
-        visible = starts[:-1] < total_w
 
-        # counts-per-character scale over the drawn bins, using density when
-        # area represents counts
-        max_c = self._counts_per_char(counts[:, visible], exact[visible])
+        # counts-per-character scale, using density when area represents counts
+        max_c = self._counts_per_char(plot_counts, exact)
         scale = (max_c / plot_rows) * 0.999  # <- avoid rounding issues
 
-        # Composition is decided once (mirroring the horizontal code) and must
-        # be set before the grid is built, because Hixel rendering reads it.
+        # Must be set before the grid is built, because Hixel rendering reads it
         compose = None
         for s in bf.symbols[:n_hists]:
             if s in COMPOSING_SYMBOLS:
@@ -639,7 +602,7 @@ class HistFormatter:
             cell_scale = scale * (exact[ib] if bf.count_area else 1)
             if cell_scale <= 0:
                 continue
-            heights = [int(c // cell_scale) for c in counts[:, ib]]
+            heights = [int(c // cell_scale) for c in plot_counts[:, ib]]
             base = 0  # running offset for stacked bins
             for ih in range(n_hists):
                 h = heights[ih]
@@ -662,8 +625,7 @@ class HistFormatter:
             out.append(f"{self.title: ^{self.columns:d}s}\n")
 
         _, ce_string = self._scale_string()
-        # Header: the count-per-column scale, right aligned so the line is
-        # exactly self.columns wide (mirrors the horizontal header).
+        # Header: the count-per-column scale, right aligned to self.columns
         longest_count = f"{max_c:g}/col" if bf.count_area else f"{max_c:g}"
         pad = self.columns - left_width - len(ce_string) - len(longest_count)
         out.append(
@@ -681,17 +643,15 @@ class HistFormatter:
                 tick = " " * left_width
             out.append(tick + "".join(h.render() for h in row) + "\n")
 
-        # Baseline: corner at the bar-area left edge, dashes filling the rest.
-        # Kept to exactly self.columns wide so it matches the bar rows.
+        # Baseline: corner at the bar-area left edge, dashes filling the rest
         out.append(
             gutter + "\u2514" + "\u2500" * (self.columns - left_width - 1) + "\n"
         )
 
-        # Bin-edge labels underneath the baseline. A compact 3-significant-
-        # figure format is used because full ``tick_format`` values (8 chars)
-        # are far wider than the per-bin column spacing and would never fit.
-        edges = self._scaled_edges()
-        labels = [f"{e:.3g}" for e in edges]
+        # Bin-edge labels underneath the baseline. The full ``tick_format``
+        # (8 chars) is wider than the bin columns, so use 3 significant figures.
+        common_exponent, _ = self._scale_string()
+        labels = [f"{e / 10**common_exponent:.3g}" for e in edges]
         bar0 = left_width  # label row index of bar column 0
         centers = [
             bar0 + (int(starts[ib]) if ib < n_bins else total_w - 1)
@@ -711,6 +671,35 @@ class HistFormatter:
             )
 
         return "".join(out)
+
+    def _fit_bins_to_width(self, counts, plot_width):
+        """Return ``(counts, edges, widths)`` with integer column widths.
+
+        Columns are distributed proportionally to the bin widths (largest
+        remainder method) and sum to ``plot_width``. If there are more bins
+        than columns, adjacent bins are merged first so no data is dropped.
+        """
+        edges = np.array(self.edges, dtype=float)
+        n_bins = len(edges) - 1
+        if n_bins > plot_width:
+            idx = np.unique(np.linspace(0, n_bins, plot_width + 1).round().astype(int))
+            counts = np.add.reduceat(counts, idx[:-1], axis=1)
+            edges = edges[idx]
+            n_bins = len(edges) - 1
+        edge_widths = np.diff(edges)
+        if np.sum(edge_widths) <= 0:
+            edge_widths = np.ones(n_bins)
+        exact = edge_widths * (plot_width / np.sum(edge_widths))
+        widths = np.maximum(1, np.floor(exact).astype(int))
+        # Many tiny bins can push the minimum width of 1 past the plot width;
+        # take the surplus from the widest bins.
+        for idx in np.argsort(-widths)[: max(int(np.sum(widths)) - plot_width, 0)]:
+            widths[idx] -= 1
+        for idx in np.argsort(-np.modf(exact)[0])[
+            : max(plot_width - int(np.sum(widths)), 0)
+        ]:
+            widths[idx] += 1
+        return counts, edges, widths
 
     def _counts_per_char(self, counts, exact_widths):
         """Return the count reference the vertical axis is scaled against.
