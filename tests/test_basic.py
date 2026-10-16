@@ -446,6 +446,87 @@ def test_vertical_final_label_kept():
     assert "  " in label_row.strip()  # labels never touch
 
 
+def test_vertical_axis_ticks():
+    """Vertical mode draws numeric ticks on the left axis and bin ticks below."""
+    counts = np.array([0.0, 10.0, 20.0, 40.0])
+    edges = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+    f = io.StringIO()
+    hp.print_hist(
+        (counts, edges),
+        file=f,
+        columns=60,
+        lines=12,
+        use_color=False,
+        max_count=40.0,
+        count_area=False,
+        orientation="vertical",
+    )
+    out = f.getvalue()
+    # Left value axis: nice ticks at 0/10/20/30/40 along the bar heights.
+    assert set(re.findall(r"[0-9.]+─", out)) == {"0─", "10─", "20─", "30─", "40─"}
+    # Bottom bin axis: a tick mark at every inner bin boundary, with the
+    # corner at the left edge and no line exceeding the requested width.
+    assert out.count("┴") == 3
+    assert "└" in out
+    assert max(len(line) for line in out.splitlines()) <= 60
+
+
+def test_vertical_axis_ticks_negative_and_zero():
+    """Negative edges, positive values and empty bins all get readable ticks."""
+    f = io.StringIO()
+    hp.print_hist(
+        (np.array([0.0, 1.0, 0.0, 2.0]), np.array([-2.0, -1.0, 0.0, 1.0, 2.0])),
+        file=f,
+        columns=50,
+        lines=10,
+        use_color=False,
+        max_count=2.0,
+        count_area=False,
+        orientation="vertical",
+    )
+    out = f.getvalue()
+    assert "0─" in out
+    assert "2─" in out
+    assert out.splitlines()[-1].lstrip().startswith("-2")
+    # Zero counts everywhere: a 0 tick and a baseline, never NaN.
+    f = io.StringIO()
+    hp.print_hist(
+        (np.zeros(4), np.arange(5)),
+        file=f,
+        columns=50,
+        lines=10,
+        use_color=False,
+        orientation="vertical",
+    )
+    out0 = f.getvalue()
+    assert "0─" in out0
+    assert "└" in out0
+    assert "nan" not in out0
+
+
+def test_vertical_axis_ticks_overlay():
+    """Overlaid histograms keep distinct symbols plus readable axes."""
+    rng = np.random.default_rng(1)
+    a = np.histogram(rng.normal(0, 1, 200), bins=6, range=(-3, 3))
+    b = np.histogram(rng.normal(1, 1, 200), bins=6, range=(-3, 3))
+    f = io.StringIO()
+    hp.print_hist(
+        ([a[0], b[0]], a[1]),
+        file=f,
+        columns=50,
+        lines=12,
+        use_color=False,
+        symbols="=|",
+        orientation="vertical",
+    )
+    out = f.getvalue()
+    assert "0─" in out
+    assert "┴" in out
+    assert "═" in out
+    assert "│" in out
+    assert max(len(line) for line in out.splitlines()) <= 50
+
+
 def test_counts_mismatch_raises():
     """A count array with the wrong number of bins raises a clear error."""
     # np.arange(4) defines 3 bins, so a 2-entry count must be rejected.

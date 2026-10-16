@@ -54,6 +54,8 @@ def main() -> None:
         "  * Classic ROOT 'text histogram' look.\n\n"
         "VERTICAL: one column per bin, bar grows up.\n"
         "  * Matches the mental model of a printed bar chart.\n"
+        "  * Count axis on the left with numeric tick marks (0 at the\n"
+        "    baseline, max on top); bin-edge labels with ticks below.\n"
         "  * Better when the variable range is short but you want the\n"
         "    shape to read left-to-right like a normal plot.\n"
         "  * Wide ranges / many bins can crowd the x-axis labels."

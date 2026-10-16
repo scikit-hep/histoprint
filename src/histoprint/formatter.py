@@ -542,6 +542,34 @@ class HistFormatter:
                 last_end = end
         return row
 
+    @staticmethod
+    def _value_ticks(max_c, plot_rows):
+        """Return ``{row: label}`` count-level ticks for the vertical y-axis.
+
+        Rows are counted from the baseline upwards. A "nice" step (1, 2 or 5
+        times a power of ten) yields roughly 4 evenly spaced labels between
+        zero and ``max_c``; zero and the maximum are always labelled.
+        """
+        if plot_rows <= 1:
+            return {0: f"{max_c:.3g}"}
+        if max_c == 0:
+            return {0: "0"}
+        exp = np.floor(np.log10(max_c))
+        step = next(m for m in (1.0, 2.0, 5.0, 10.0) if m >= max_c / 4 / 10**exp)
+        step *= 10**exp
+        values = [0.0]
+        v = step
+        while v <= max_c * (1 + 1e-9):
+            values.append(v)
+            v += step
+        if values[-1] < max_c:
+            values.append(max_c)
+        ticks = {}
+        for v in values:
+            row = min(plot_rows - 1, round(v / max_c * (plot_rows - 1)))
+            ticks[row] = f"{v:.3g}"
+        return ticks
+
     def _format_histogram_vertical(self, counts):
         """Format (a set of) histogram counts as vertical bars.
 
@@ -608,17 +636,26 @@ class HistFormatter:
             " " * left_width + ce_string + f"{longest_count:>{max(pad, 0):d}s}\n"
         )
 
-        # Bar rows, top first, with the maximum count in the left gutter
+        # Bar rows, top first, with count tick marks on the left axis: the
+        # value axis of a vertical plot is the vertical (count) axis, so its
+        # ticks carry numbers (0 at the baseline, nice levels in between and
+        # max_c at the top) plus a tick mark pointing at the bars.
+        y_ticks = self._value_ticks(max_c, plot_rows)
         gutter = " " * left_width
         for r in reversed(range(plot_rows)):
-            tick = f"{max_c:>{left_width - 1}.3g} " if r == plot_rows - 1 else gutter
+            tick = f"{y_ticks[r]:>{left_width - 1}s}\u2500" if r in y_ticks else gutter
             bars = "".join(
                 col[r].render() * w for col, w in zip(columns, widths, strict=True)
             )
             out.append(tick + bars + "\n")
 
-        # Baseline: corner at the bar-area left edge, dashes filling the rest
-        out.append(gutter + "\u2514" + "\u2500" * (plot_width - 1) + "\n")
+        # Baseline: corner at the bar-area left edge, tick marks '┴' at every
+        # bin boundary so the edge labels underneath line up with the bins.
+        baseline = ["\u2500"] * plot_width
+        baseline[0] = "\u2514"
+        for s in starts[1:-1]:
+            baseline[s] = "\u2534"
+        out.append(gutter + "".join(baseline) + "\n")
 
         # Bin-edge labels underneath the baseline. The full ``tick_format``
         # (8 chars) is wider than the bin columns, so use 3 significant figures.
