@@ -138,6 +138,44 @@ The combining characters are ``/`` and ``\``. Note that they are used in the
 default set of characters for the 4th and 5th histogram if they are present.
 
 
+Live updating histograms
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+``LiveHistogram`` is a context manager that re-renders a histogram at a fixed
+terminal position instead of printing a new one for every update. This is
+useful e.g. for plotting data while it is still being collected::
+
+    import time
+
+    import numpy as np
+    from histoprint import LiveHistogram
+
+    edges = np.linspace(-4, 4, 12)
+    data = []
+    with LiveHistogram(title="Streaming signal", scale_bin_width=False) as live:
+        for chunk in np.random.randn(10, 25):  # 10 chunks of 25 samples
+            data.extend(chunk)
+            counts, _ = np.histogram(data, bins=edges)
+            live.update((counts, edges))
+            time.sleep(0.1)
+
+The first ``live.update`` draws the histogram normally. Each subsequent update
+moves the cursor back to the beginning of the previous frame, erases it and
+draws the new one, so the histogram appears to update in place. After the
+``with`` block the last frame stays visible. All other keyword arguments are
+forwarded to ``print_hist``.
+
+Keep in mind:
+
+- Live in-place updating requires a terminal stream. If the stream is not a
+  terminal (e.g. a pipe or a file) and ``force_live`` is not set, no escape
+  codes are emitted and every update is printed like ``print_hist``.
+- The histogram must fit into the terminal, since the cursor cannot be moved
+  back beyond the terminal scroll region.
+- ``live.update`` skips frames whose output is unchanged, and ``min_interval``
+  (in seconds) can be used to limit how often the frame is redrawn.
+
+
 Command line interface
 ----------------------
 
