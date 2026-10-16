@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `LiveHistogram` context manager to redraw a histogram in place at a fixed
+  terminal position, for updating a histogram live while data is collected.
+
 ## [2.7.1]
 
 ### Fixed
