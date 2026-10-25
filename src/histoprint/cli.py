@@ -59,6 +59,15 @@ from histoprint import formatter
     help=f"Colour cycle for background colours. Default: '{formatter.DEFAULT_BG_COLORS}', Choices: '0rgbcmykwRGBCMYKW'",
 )
 @click.option(
+    "-o",
+    "--orientation",
+    type=click.Choice(["horizontal", "vertical"]),
+    default="horizontal",
+    show_default=True,
+    help="Direction in which bins are plotted: bars extending right "
+    "(horizontal) or upwards (vertical).",
+)
+@click.option(
     "-f",
     "--field",
     "fields",

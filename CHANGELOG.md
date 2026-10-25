@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Vertical (upwards-growing) bin rendering. Pass `orientation="vertical"` to
+  `print_hist`/`text_hist`/`HistFormatter` or `--orientation vertical` on the
+  command line. Supports overlay, stacking, colour/symbol cycles, summaries and
+  variable bin widths, mirroring the existing horizontal output.
+  Adjacent bins are merged when there are more bins than columns.
+
+### Changed
+- Bin counts that do not match the number of bin edges now raise a clear
+  `ValueError` in both orientations instead of misrendering.
+
 ## [2.7.1]
 
 ### Fixed
