@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- New self-contained `hist2d` package that renders 2D histograms as terminal
+  heatmaps (every bin is a single character encoded by a shading/color ramp).
+  It accepts `numpy.histogram2d`/`histogramdd` tuples and any
+  `PlottableHistogram` object with exactly two axes (e.g.
+  `boost_histogram.Histogram`).
+- `hist2d` command-line interface (`hist2d` script and `python -m hist2d`) that
+  prints two-column TXT/CSV data or ROOT 2D histograms as a heatmap.
+
 ## [2.7.1]
 
 ### Fixed
